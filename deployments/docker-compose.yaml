@@ -1,0 +1,20 @@
+services:
+    postgres:
+      image: postgres:17
+      container_name: postgres_container
+      env_file:
+        - ../configs/.env
+      ports:
+        - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      volumes:
+        - ./pgdata/beers_data:/var/lib/postgresql/data
+      networks:
+        - app_net
+
+
+volumes:
+  pgdata:
+
+networks:
+  app_net:
+    driver: bridge
