@@ -1,33 +1,24 @@
-// package main
-
-// import (
-// 	_ "shortener/migrations"
-// 	"github.com/jackc/pgx/v5/stdlib"
-// 	"shortener/internal/postgres"
-// )
-
-// func main(
-
-// 	postgres.Config
-
-// )
-
 package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/Winushkin/go-toolkit/config"
 	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/Winushkin/go-toolkit/postgres"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
+
+	_ "shortener/migrations"
 )
 
 const devMode = true
 
 func main() {
-	// 1. Инициализация логгера
+	// Логгер
 	ctx, err := logger.NewLoggerContext(context.Background(), devMode)
 	if err != nil {
 		panic(fmt.Errorf("failed to create logger context: %w", err))
@@ -38,19 +29,34 @@ func main() {
 		panic("logger not found in context")
 	}
 
-	// 2. Инициализация конфигурации PostgreSQL
-	pgCfg := postgres.Config{
-		Host: config.GetEnv("POSTGRES_HOST", "localhost"),
-		Port: config.GetEnv("POSTGRES_PORT", "5432"),
-		// ...
-		MaxConns: config.GetEnv("POSTGRES_MAXCONNS", "1"),
-	}
+	// Конфиг
+	cfg := config.NewAppConfig()
 
-	// 3. Подключение к PostgreSQL
-	pool, err := postgres.NewPool(ctx, pgCfg)
+	// БД пул
+	pool, err := postgres.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		panic(fmt.Errorf("failed to create postgres pool: %w", err))
 	}
+	defer pool.Close()
 
-	log.Info(ctx, "Успешное подключение к базе данных!", zap.String("Port", pgCfg.Port))
+	log.Info(ctx, "Успешное подключение к базе данных!", zap.String("Port", cfg.Postgres.Port))
+
+	// Миграции
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Error(ctx, "Ошибка настройки диалекта: %v", zap.Error(err))
+	}
+	db := stdlib.OpenDBFromPool(pool)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
+
+	log.Info(ctx, "Запуск миграций базы данных")
+	if err := goose.Up(db, ""); err != nil {
+		log.Error(ctx, "Ошибка выполнения миграций: %v", zap.Error(err))
+	}
+	log.Info(ctx, "Миграции успешно применены!")
+
 }
