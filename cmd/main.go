@@ -43,19 +43,19 @@ func main() {
 
 	// Миграции
 	if err := goose.SetDialect("postgres"); err != nil {
-		log.Error(ctx, "Ошибка настройки диалекта: %v", zap.Error(err))
+		log.Error(ctx, err, "Ошибка настройки диалекта")
 	}
 	db := stdlib.OpenDBFromPool(pool)
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-
+			log.Error(ctx, err, "failed to close db")
 		}
 	}(db)
 
 	log.Info(ctx, "Запуск миграций базы данных")
 	if err := goose.Up(db, ""); err != nil {
-		log.Error(ctx, "Ошибка выполнения миграций: %v", zap.Error(err))
+		log.Error(ctx, err, "Ошибка выполнения миграций")
 	}
 	log.Info(ctx, "Миграции успешно применены!")
 
