@@ -1,3 +1,5 @@
 .idea/
 .env
 deployments/pgdata/
+.DS_Store/
+deployments/.DS_Store/

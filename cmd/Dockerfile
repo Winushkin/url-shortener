@@ -15,6 +15,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM alpine:latest
 
 COPY --from=builder /app/server ./
+COPY --from=builder /app/web/index.html ./
 
 EXPOSE 8000
 

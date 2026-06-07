@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сокращатель ссылок</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; text-align: center; }
+        input[type="url"] { width: 80%; padding: 10px; margin-bottom: 10px; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007BFF; color: white; border: none; border-radius: 4px; }
+        #result { margin-top: 20px; font-weight: bold; font-size: 18px; }
+        a { color: #007BFF; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h2>Сократить ссылку</h2>
+    <form id="shortenForm">
+        <input type="url" id="longUrl" placeholder="Вставьте длинную ссылку" required>
+        <br>
+        <button type="submit">Сократить</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const longUrl = document.getElementById('longUrl').value;
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerText = 'Генерируем...';
+
+            try {
+                // Отправляем POST запрос на ваш Go-сервер
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: longUrl })
+                });
+
+                if (!response.ok) throw new Error('Ошибка сервера');
+
+                const data = await response.json();
+                // Выводим результат в виде кликабельной ссылки
+                resultDiv.innerHTML = `Короткая ссылка: <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
+            } catch (err) {
+                resultDiv.innerText = 'Произошла ошибка при сокращении';
+            }
+        });
+    </script>
+</body>
+</html>
