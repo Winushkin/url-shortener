@@ -15,7 +15,7 @@ type Repository interface {
 	InsertURL(ctx context.Context, longURL string) (uint64, error)
 
 	// Обновляет короткий код для записи по её ID (после генерации Base62)
-	UpdateShortCode(ctx context.Context, id uint64, shortCode string) error
+	InsertShortCode(ctx context.Context, id uint64, shortCode string) error
 
 	// Находит полную запись по короткому коду (используется при редиректе)
 	GetByShortCode(ctx context.Context, shortCode string) (*entities.URL, error)
@@ -46,7 +46,7 @@ func (p *postgres) InsertURL(ctx context.Context, longURL string) (uint64, error
 	return id, nil
 }
 
-func (p *postgres) UpdateShortCode(ctx context.Context, id uint64, shortCode string) error {
+func (p *postgres) InsertShortCode(ctx context.Context, id uint64, shortCode string) error {
 	sql, args, err := insertShortURL(shortCode, id).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed to parse query: %w", err)
