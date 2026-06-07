@@ -24,6 +24,7 @@ func NewURLUseCase(repo postgres.Repository) URLUseCase {
 	return &urlUseCase{repo: repo}
 }
 
+// TODO Попробовать генерацию числа с помощью Sonyflake / Snowflake
 func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, error) {
 	id, err := uc.repo.InsertURL(ctx, longURL)
 	if err != nil {
