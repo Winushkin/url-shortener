@@ -16,4 +16,6 @@ FROM alpine:latest
 
 COPY --from=builder /app/server ./
 
+EXPOSE 8000
+
 CMD ["./server"]
