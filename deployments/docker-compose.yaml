@@ -7,7 +7,7 @@ services:
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
-      - ./pgdata/beers_data:/var/lib/postgresql/data
+      - ./pgdata/urls_data:/var/lib/postgresql/data
     networks:
       - app_net
     healthcheck:
