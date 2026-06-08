@@ -8,7 +8,7 @@ import (
 func TestEncode(t *testing.T) {
 	tests := []struct {
 		name string
-		id   uint64
+		id   int64
 		want string
 	}{
 		{"Zero value", 0, "0"},
@@ -19,7 +19,6 @@ func TestEncode(t *testing.T) {
 		{"Last capital Z", 61, "Z"},
 		{"Base case 62", 62, "10"},
 		{"Large ID", 123456789, "8m0Kx"},
-		{"Max uint64", 18446744073709551615, "lYGhA16ahyf"},
 	}
 
 	for _, tt := range tests {
@@ -35,7 +34,7 @@ func TestDecode(t *testing.T) {
 	tests := []struct {
 		name    string
 		encoded string
-		want    uint64
+		want    int64
 		wantErr bool
 	}{
 		{"Zero value", "0", 0, false},
@@ -46,7 +45,6 @@ func TestDecode(t *testing.T) {
 		{"Last capital Z", "Z", 61, false},
 		{"Base case 10", "10", 62, false},
 		{"Large ID", "8m0Kx", 123456789, false},
-		{"Max uint64", "lYGhA16ahyf", 18446744073709551615, false},
 		{"Invalid character hypen", "abc-123", 0, true},
 		{"Invalid character cyrillic", "abс", 0, true},
 	}
@@ -66,7 +64,7 @@ func TestDecode(t *testing.T) {
 }
 
 func TestRoundtrip(t *testing.T) {
-	var i uint64
+	var i int64
 	for i = 0; i < 100000; i++ {
 		encoded := base62.Encode(i)
 		decoded, err := base62.Decode(encoded)

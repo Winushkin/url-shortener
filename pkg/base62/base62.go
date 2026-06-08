@@ -11,7 +11,7 @@ import (
 const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // Encode преобразует числовой ID в короткую строку Base62
-func Encode(id uint64) string {
+func Encode(id int64) string {
 	if id == 0 {
 		return string(chars[0])
 	}
@@ -33,12 +33,12 @@ func Encode(id uint64) string {
 }
 
 // Decode преобразует короткую строку Base62 обратно в числовой ID
-func Decode(encoded string) (uint64, error) {
-	var id uint64
+func Decode(encoded string) (int64, error) {
+	var id int64
 	length := len(encoded)
 
 	for i, char := range encoded {
-		var power = uint64(length - 1 - i)
+		var power = int64(length - 1 - i)
 		var value int
 
 		// Быстрое определение значения символа
@@ -52,7 +52,7 @@ func Decode(encoded string) (uint64, error) {
 			return 0, errors.New("недопустимый символ в строке Base62")
 		}
 
-		id += uint64(value) * uint64(math.Pow(62, float64(power)))
+		id += int64(value) * int64(math.Pow(62, float64(power)))
 	}
 
 	return id, nil
