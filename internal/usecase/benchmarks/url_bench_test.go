@@ -46,7 +46,13 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	uc := usecase.NewURLUseCase(repo, node)
+
+	deps := usecase.Dependencies{
+		Repo: repo,
+		Node: node,
+	}
+
+	uc := usecase.NewURLUseCase(deps)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

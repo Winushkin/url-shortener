@@ -10,6 +10,7 @@ import (
 	"github.com/Winushkin/go-toolkit/config"
 	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/Winushkin/go-toolkit/postgres"
+	"github.com/Winushkin/go-toolkit/redis"
 	"github.com/bwmarrin/snowflake"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -21,6 +22,7 @@ import (
 	repository "shortener/internal/repository/postgres"
 	"shortener/internal/usecase"
 	_ "shortener/migrations"
+
 )
 
 const devMode = true
@@ -39,22 +41,19 @@ func main() {
 
 	// Конфиг
 	cfg := config.NewAppConfig()
+	log.Debug(ctx, "cfg Redis", zap.Any("redis", cfg.Redis))
 
 	// БД пул
-	pool := connectDB(ctx, cfg.Postgres)
+	pool := connectPSQL(ctx, cfg.Postgres)
 	defer pool.Close()
 
 	// Миграции
 	migrate(ctx, pool)
 
-	repo := repository.NewPostgres(pool)
+	// UseCases
+	uc := initUC(ctx, pool, cfg.Redis)
 
-	node, err := snowflake.NewNode(1)
-	if err != nil {
-		log.Error(ctx, err, "failed to create snowflake Node")
-	}
-	uc := usecase.NewURLUseCase(repo, node)
-
+	// Хендлеры
 	handler := handler.NewHandler(uc, cfg.DomainName)
 
 	// Cервер
@@ -82,7 +81,35 @@ func registerServer(ctx context.Context, handler *handler.Handler, port string) 
 	return server
 }
 
-func connectDB(ctx context.Context, cfg postgres.Config) *pgxpool.Pool {
+
+func initUC(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usecase.URLUseCase {
+	log, ok := logger.GetLoggerFromCtx(ctx)
+	if !ok {
+		panic("logger not found in context")
+	}
+
+	repo := repository.NewPostgres(pool)
+
+	rdb, err := redis.NewRedisClient(ctx, redisCfg)
+	if err != nil {
+		log.Error(ctx, err, "failed to create redis DB")
+	}
+
+	node, err := snowflake.NewNode(1)
+	if err != nil {
+		log.Error(ctx, err, "failed to create snowflake Node")
+	}
+	deps := usecase.Dependencies{
+		Repo: repo,
+		Rdb: rdb,
+		Node: node,
+	}
+	uc := usecase.NewURLUseCase(deps)
+
+	return uc
+}
+
+func connectPSQL(ctx context.Context, cfg postgres.Config) *pgxpool.Pool {
 	log, ok := logger.GetLoggerFromCtx(ctx)
 	if !ok {
 		panic("logger not found in context")
@@ -90,7 +117,7 @@ func connectDB(ctx context.Context, cfg postgres.Config) *pgxpool.Pool {
 
 	pool, err := postgres.NewPool(ctx, cfg)
 	if err != nil {
-		panic(fmt.Errorf("failed to create postgres pool: %w", err))
+		log.Error(ctx, err, "failed to create postgres pool")
 	}
 	log.Info(ctx, "Успешное подключение к базе данных!", zap.String("Port", cfg.Port))
 	return pool

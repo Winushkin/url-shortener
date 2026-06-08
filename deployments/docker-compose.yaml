@@ -1,4 +1,22 @@
 services:
+  redis:
+    container_name: redis_cache
+    image: redis:7-alpine
+    env_file:
+      - ../.env
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    
+
   postgres:
     image: postgres:17
     container_name: postgres_container
@@ -27,6 +45,8 @@ services:
       - ../.env
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app_net
@@ -64,6 +84,7 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
 
 networks:
   app_net:
