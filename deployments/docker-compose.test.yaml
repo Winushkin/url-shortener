@@ -1,0 +1,25 @@
+services:
+  test_postgres:
+    image: postgres:17
+    container_name: postgres_test
+    environment:
+      POSTGRES_HOST: test_postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: test_urls
+      POSTGRES_MIN_CONNS: 1
+      POSTGRES_MAX_CONNS: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./test_pgdata/urls_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d test_urls"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+
+volumes:
+  test_pgdata:
