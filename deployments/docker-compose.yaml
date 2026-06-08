@@ -5,7 +5,7 @@ services:
     env_file:
       - ../.env
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - ./pgdata/urls_data:/var/lib/postgresql/data
     networks:
@@ -59,6 +59,8 @@ services:
   #     - server
   #   networks:
   #     - app_net
+
+
 
 volumes:
   pgdata:
