@@ -7,38 +7,42 @@ import (
 	"fmt"
 	"shortener/internal/repository/postgres"
 	"shortener/pkg/base62"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 type URLUseCase interface {
+	// Shorten - обрабатывает запрос укращения ссылки
 	Shorten(ctx context.Context, longURL string) (string, error)
+
+	// GetLongURL - обрабатывает запрос получения оригинальной ссылки по коду
 	GetLongURL(ctx context.Context, shortCode string) (string, error)
 }
 
 // urlUseCase реализует бизнес-логику для работы с URL
 type urlUseCase struct {
 	repo postgres.Repository
+	node *snowflake.Node
 }
 
 // NewURLUseCase — конструктор слоя бизнес-логики
-func NewURLUseCase(repo postgres.Repository) URLUseCase {
-	return &urlUseCase{repo: repo}
+func NewURLUseCase(repo postgres.Repository, node *snowflake.Node) URLUseCase {
+	return &urlUseCase{
+		repo: repo,
+		node: node,
+	}
 }
 
-// TODO Попробовать генерацию числа с помощью Sonyflake / Snowflake
 func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, error) {
-	id, err := uc.repo.InsertURL(ctx, longURL)
+	id := uc.node.Generate().Int64()
+	code := base62.Encode(id)
+
+	err := uc.repo.InsertURL(ctx, longURL, code)
 	if err != nil {
 		return "", fmt.Errorf("usecase: failed to create url record: %w", err)
 	}
 
-	shortCode := base62.Encode(id)
-
-	err = uc.repo.InsertShortCode(ctx, id, shortCode)
-	if err != nil {
-		return "", fmt.Errorf("usecase: failed to update short code: %w", err)
-	}
-
-	return shortCode, nil
+	return code, nil
 }
 
 func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string, error) {

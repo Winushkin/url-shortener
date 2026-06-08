@@ -13,24 +13,16 @@ const (
 )
 
 func TestInsertURL(t *testing.T) {
-	builder := insertURL(longExample)
+	builder := insertURL(longExample, shortCode)
 	sqlStr, _, err := builder.ToSql()
 
-	expectedSQL := "INSERT INTO urls (long_url) VALUES ($1) RETURNING id"
+	expectedSQL := "INSERT INTO urls (long_url,short_code) VALUES ($1,$2)"
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSQL, sqlStr)
 }
 
-func TestInsertShortURL(t *testing.T) {
-	builder := insertShortURL(shortExample, exampleID)
-	sqlStr, _, err := builder.ToSql()
 
-	expectedSQL := "UPDATE urls SET short_code = $1 WHERE id = $2"
-
-	assert.NoError(t, err)
-	assert.Equal(t, expectedSQL, sqlStr)
-}
 
 func TestSelectLongURLByShort(t *testing.T) {
 	builder := SelectLongURLByShort(shortExample)

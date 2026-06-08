@@ -12,10 +12,7 @@ import (
 
 type Repository interface {
 	// Сохраняет длинный URL и возвращает сгенерированный ID
-	InsertURL(ctx context.Context, longURL string) (uint64, error)
-
-	// Обновляет короткий код для записи по её ID (после генерации Base62)
-	InsertShortCode(ctx context.Context, id uint64, shortCode string) error
+	InsertURL(ctx context.Context, url, shortCode string) error
 
 	// Находит полную запись по короткому коду (используется при редиректе)
 	GetByShortCode(ctx context.Context, shortCode string) (*entities.URL, error)
@@ -32,22 +29,9 @@ func NewPostgres(pool *pgxpool.Pool) Repository {
 	return &postgres{pool: pool}
 }
 
-func (p *postgres) InsertURL(ctx context.Context, longURL string) (uint64, error) {
-	sql, args, err := insertURL(longURL).ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse query: %w", err)
-	}
-	var id uint64
-	err = p.pool.QueryRow(ctx, sql, args...).Scan(&id)
-	if err != nil {
-		return 0, fmt.Errorf("queryRow: %w", err)
-	}
 
-	return id, nil
-}
-
-func (p *postgres) InsertShortCode(ctx context.Context, id uint64, shortCode string) error {
-	sql, args, err := insertShortURL(shortCode, id).ToSql()
+func (p *postgres) InsertURL(ctx context.Context, url, shortCode string) error {
+	sql, args, err := insertURL(url, shortCode).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed to parse query: %w", err)
 	}

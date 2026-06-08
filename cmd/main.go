@@ -10,6 +10,7 @@ import (
 	"github.com/Winushkin/go-toolkit/config"
 	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/Winushkin/go-toolkit/postgres"
+	"github.com/bwmarrin/snowflake"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -47,7 +48,13 @@ func main() {
 	migrate(ctx, pool)
 
 	repo := repository.NewPostgres(pool)
-	uc := usecase.NewURLUseCase(repo)
+
+	node, err := snowflake.NewNode(1)
+	if err != nil {
+		log.Error(ctx, err, "failed to create snowflake Node")
+	}
+	uc := usecase.NewURLUseCase(repo, node)
+
 	handler := handler.NewHandler(uc, cfg.DomainName)
 
 	// Cервер

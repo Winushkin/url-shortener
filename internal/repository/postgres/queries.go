@@ -18,22 +18,6 @@ const (
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-// insertUrl возвращает запрос для вставки новой ссылки
-func insertURL(URL string) sq.InsertBuilder {
-	data := map[string]any{
-		longURL: URL,
-	}
-	return psql.Insert(table).
-		SetMap(data).
-		Suffix("RETURNING id")
-}
-
-// insertShortURL возвращает запрос для вставки сокращенной ссылки
-func insertShortURL(shortURL string, id uint64) sq.UpdateBuilder {
-	return psql.Update(table).
-		Set(shortCode, shortURL).
-		Where(sq.Eq{ID: id})
-}
 
 // SelectLongURLByShort возвращает запрос для селекта длинной ссылки по короткой
 func SelectLongURLByShort(shortURL string) sq.SelectBuilder {
@@ -52,4 +36,12 @@ func incrementClicks(shortURL string) sq.UpdateBuilder {
 	return psql.Update(table).
 		Set(clicksCount, sq.Expr(fmt.Sprintf("%s + 1", clicksCount))).
 		Where(sq.Eq{shortCode: shortURL})
+}
+
+func insertURL(url, code string) sq.InsertBuilder {
+	data := map[string]any{
+		longURL:   url,
+		shortCode: code,
+	}
+	return psql.Insert(table).SetMap(data)
 }
