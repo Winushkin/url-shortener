@@ -1,4 +1,4 @@
-// Package migrations содержит goose миграции для PostgreSQL 
+// Package migrations содержит goose миграции для PostgreSQL
 package migrations
 
 import (
@@ -28,7 +28,7 @@ func upInitShortenerTable(ctx context.Context, tx *sql.Tx) error {
 	if _, err := tx.ExecContext(ctx, query); err != nil {
 		return fmt.Errorf("ошибка создания таблицы urls или индекса: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -37,9 +37,9 @@ func downInitShortenerTable(ctx context.Context, tx *sql.Tx) error {
 		DROP INDEX IF EXISTS idx_urls_short_code;
 		DROP TABLE IF EXISTS urls
 	`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+	if _, err := tx.ExecContext(ctx, query); err != nil {
 		return fmt.Errorf("ошибка удаления таблицы urls или индекса: %w", err)
 	}
-	
+
 	return nil
 }

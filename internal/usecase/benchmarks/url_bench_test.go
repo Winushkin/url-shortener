@@ -2,8 +2,8 @@ package benchmarks_test
 
 import (
 	"context"
-	"shortener/internal/repository" 
-	"shortener/internal/usecase" 
+	"shortener/internal/repository"
+	"shortener/internal/usecase"
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
@@ -25,7 +25,7 @@ func BenchmarkUseCase_Old_TwoQueries(b *testing.B) {
 	uc := NewLegacyUseCase(oldRepo)
 
 	b.ResetTimer() // Сбрасываем таймер, чтобы время подключения к БД не учитывалось
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := uc.Shorten(ctx, exampleURL)
 		if err != nil {
 			b.Fatalf("error in old shorten: %v", err)
@@ -55,7 +55,7 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 	uc := usecase.NewURLUseCase(deps)
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := uc.Shorten(ctx, exampleURL)
 		if err != nil {
 			b.Fatalf("error in new shorten: %v", err)
@@ -64,8 +64,10 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 }
 
 // Вспомогательная функция для быстрой инициализации pgxpool
+//
+//nolint:gosec
 func setupTestPool(b *testing.B, ctx context.Context) *pgxpool.Pool {
-	b.Helper() 
+	b.Helper()
 
 	// Строка подключения к вашей тестовой БД
 	connStr := "postgres://postgres:1234@localhost:5432/test_urls?sslmode=disable&pool_min_conns=1&pool_max_conns=10"

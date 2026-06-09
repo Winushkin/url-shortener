@@ -10,3 +10,14 @@ down:
 testUsecase:
 	docker compose -f deployments/docker-compose.test.yaml up --build -d
 	go test -bench=. -benchmem ./internal/usecase/benchmarks
+
+
+lint:
+	golangci-lint run
+
+test:
+	go test ./...
+
+check_fmt:
+	@go fmt ./...
+	@git diff --exit-code --quiet

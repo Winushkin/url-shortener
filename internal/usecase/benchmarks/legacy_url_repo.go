@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type legacyPostgres struct {
@@ -50,18 +50,18 @@ func (p *legacyPostgres) InsertShortCode(ctx context.Context, id int64, shortCod
 
 const (
 	// Константы с именами таблиц, используемых в запросах
-	table       = "urls"
-	ID          = "id"
-	longURL     = "long_url"
-	shortCode   = "short_code"
+	table     = "urls"
+	ID        = "id"
+	longURL   = "long_url"
+	shortCode = "short_code"
 )
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 // insertUrl возвращает запрос для вставки новой ссылки
-func insertURL(URL string) sq.InsertBuilder {
+func insertURL(url string) sq.InsertBuilder {
 	data := map[string]any{
-		longURL: URL,
+		longURL: url,
 	}
 	return psql.Insert(table).
 		SetMap(data).

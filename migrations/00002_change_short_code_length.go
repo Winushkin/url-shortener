@@ -29,7 +29,7 @@ func downChangeShortCodeLength(ctx context.Context, tx *sql.Tx) error {
 		ALTER TABLE IF EXISTS urls
 		ALTER COLUMN short_code TYPE VARCHAR(10);
 	`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+	if _, err := tx.ExecContext(ctx, query); err != nil {
 		return fmt.Errorf("ошибка удаления таблицы urls или индекса: %w", err)
 	}
 	return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/Winushkin/go-toolkit/config"
 	"github.com/Winushkin/go-toolkit/logger"
@@ -22,10 +23,12 @@ import (
 	repository "shortener/internal/repository"
 	"shortener/internal/usecase"
 	_ "shortener/migrations"
-
 )
 
-const devMode = true
+const (
+	devMode           = true
+	readHeaderTimeout = 3 * time.Second
+)
 
 func main() {
 	// Логгер
@@ -71,8 +74,9 @@ func registerServer(ctx context.Context, handler *handler.Handler, port string) 
 	wrappedMux := middleware.LoggingMiddleware(mux)
 
 	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: wrappedMux,
+		Addr:              ":" + port,
+		Handler:           wrappedMux,
+		ReadHeaderTimeout: readHeaderTimeout,
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
 		},
@@ -80,7 +84,6 @@ func registerServer(ctx context.Context, handler *handler.Handler, port string) 
 
 	return server
 }
-
 
 func initUC(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usecase.URLUseCase {
 	log, ok := logger.GetLoggerFromCtx(ctx)
@@ -101,7 +104,7 @@ func initUC(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usec
 	}
 	deps := usecase.Dependencies{
 		Repo: repo,
-		Rdb: rdb,
+		Rdb:  rdb,
 		Node: node,
 	}
 	uc := usecase.NewURLUseCase(deps)

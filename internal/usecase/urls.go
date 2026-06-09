@@ -14,6 +14,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const day = 24 * time.Hour
+
 type Dependencies struct {
 	Repo repository.Repository
 	Node *snowflake.Node
@@ -61,7 +63,7 @@ func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, erro
 	}
 
 	if uc.rdb != nil {
-		err := uc.rdb.Set(ctx, code, longURL, 24*time.Hour).Err()
+		err := uc.rdb.Set(ctx, code, longURL, day).Err()
 		if err != nil {
 			log, ok := logger.GetLoggerFromCtx(ctx)
 			if !ok {
@@ -75,7 +77,6 @@ func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, erro
 }
 
 func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string, error) {
-
 	if uc.rdb != nil {
 		longURL, err := uc.rdb.Get(ctx, shortCode).Result()
 		if err == nil {
@@ -92,10 +93,8 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 			if !ok {
 				return "", errors.New("failed to get logger from ctx in rdb error")
 			}
-			log.Error(ctx, err, "failed to get cache")	
+			log.Error(ctx, err, "failed to get cache")
 		}
-
-
 	}
 	record, err := uc.repo.GetByShortCode(ctx, shortCode)
 	if err != nil {
@@ -105,8 +104,8 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 	if record == nil {
 		return "", errors.New("url not found")
 	}
-	if uc.rdb != nil{
-		err = uc.rdb.Set(ctx, shortCode, record.LongURL, 24 * time.Hour).Err()
+	if uc.rdb != nil {
+		err = uc.rdb.Set(ctx, shortCode, record.LongURL, day).Err()
 		if err != nil {
 			log, ok := logger.GetLoggerFromCtx(ctx)
 			if !ok {

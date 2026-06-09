@@ -30,7 +30,6 @@ func NewPostgres(pool *pgxpool.Pool) Repository {
 	return &postgres{pool: pool}
 }
 
-
 func (p *postgres) InsertURL(ctx context.Context, url, shortCode string) error {
 	sql, args, err := queries.InsertURL(url, shortCode).ToSql()
 	if err != nil {

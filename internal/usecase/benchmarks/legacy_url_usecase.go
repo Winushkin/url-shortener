@@ -1,4 +1,4 @@
-// Package benchmarks содержит бенчмарк тесты для usecase
+// Package benchmarks_test содержит бенчмарк тесты для usecase
 package benchmarks_test
 
 import (

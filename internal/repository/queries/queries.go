@@ -45,5 +45,3 @@ func IncrementClicks(shortURL string) sq.UpdateBuilder {
 		Set(clicksCount, sq.Expr(fmt.Sprintf("%s + 1", clicksCount))).
 		Where(sq.Eq{shortCode: shortURL})
 }
-
-

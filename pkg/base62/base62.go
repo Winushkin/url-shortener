@@ -8,7 +8,12 @@ import (
 )
 
 // Алфавит Base62: 0-9, a-z, A-Z (порядок важен для сохранения сортировки в БД)
-const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const (
+	chars           = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	base            = 62
+	miniLettersDiff = 10
+	MaxLettersDiff  = 36
+)
 
 // Encode преобразует числовой ID в короткую строку Base62
 func Encode(id int64) string {
@@ -18,9 +23,9 @@ func Encode(id int64) string {
 
 	var sb strings.Builder
 	for id > 0 {
-		remainder := id % 62
+		remainder := id % base
 		sb.WriteByte(chars[remainder])
-		id /= 62
+		id /= base
 	}
 
 	// Переворачиваем строку, так как остатки получаются в обратном порядке
@@ -42,17 +47,18 @@ func Decode(encoded string) (int64, error) {
 		var value int
 
 		// Быстрое определение значения символа
-		if char >= '0' && char <= '9' {
+		switch {
+		case char >= '0' && char <= '9':
 			value = int(char - '0')
-		} else if char >= 'a' && char <= 'z' {
-			value = int(char - 'a' + 10)
-		} else if char >= 'A' && char <= 'Z' {
-			value = int(char - 'A' + 36)
-		} else {
+		case char >= 'a' && char <= 'z':
+			value = int(char - 'a' + miniLettersDiff)
+		case char >= 'A' && char <= 'Z':
+			value = int(char - 'A' + MaxLettersDiff)
+		default:
 			return 0, errors.New("недопустимый символ в строке Base62")
 		}
 
-		id += int64(value) * int64(math.Pow(62, float64(power)))
+		id += int64(value) * int64(math.Pow(base, float64(power)))
 	}
 
 	return id, nil

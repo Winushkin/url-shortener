@@ -171,11 +171,11 @@ func TestRepo_InsertURL(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				var actualURL string
 				err = testDB.QueryRow(ctx, "SELECT long_url FROM urls WHERE short_code = $1", tt.args.shortCode).Scan(&actualURL)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.args.url, actualURL)
 			}
 		})
@@ -233,7 +233,7 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				require.NotNil(t, res)
 				assert.Equal(t, tt.want.LongURL, res.LongURL)
 				assert.Equal(t, tt.want.ShortCode, res.ShortCode)
@@ -242,7 +242,6 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 		})
 	}
 }
-
 
 func TestURLRepo_IncrementClicks(t *testing.T) {
 	ctx := t.Context()
@@ -290,7 +289,7 @@ func TestURLRepo_IncrementClicks(t *testing.T) {
 				cleanDB(t, ctx)
 			},
 			shortCode: "ghost",
-			wantErr:   false, 
+			wantErr:   false,
 		},
 	}
 
@@ -302,16 +301,15 @@ func TestURLRepo_IncrementClicks(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				if tt.shortCode != "ghost" {
 					var actualClicks int64
 					err = testDB.QueryRow(ctx, "SELECT clicks_count FROM urls WHERE short_code = $1", tt.shortCode).Scan(&actualClicks)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					assert.Equal(t, tt.wantClicks, actualClicks)
 				}
 			}
 		})
 	}
 }
-

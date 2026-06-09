@@ -15,6 +15,7 @@ import (
 // responseWriterInterceptor перехватывает HTTP-статус ответа
 type responseWriterInterceptor struct {
 	http.ResponseWriter
+
 	statusCode int
 }
 
@@ -78,9 +79,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+const reqIDLen = 8
+
 // Вспомогательная функция для генерации request_id
 func generateRequestID() string {
-	b := make([]byte, 8)
+	b := make([]byte, reqIDLen)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }

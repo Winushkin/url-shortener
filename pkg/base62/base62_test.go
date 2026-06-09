@@ -63,6 +63,7 @@ func TestDecode(t *testing.T) {
 	}
 }
 
+//nolint:intrange, modernize
 func TestRoundtrip(t *testing.T) {
 	var i int64
 	for i = 0; i < 100000; i++ {
@@ -78,13 +79,13 @@ func TestRoundtrip(t *testing.T) {
 }
 
 func BenchmarkEncode(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		base62.Encode(123456789)
 	}
 }
 
 func BenchmarkDecode(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = base62.Decode("8M9b1")
 	}
 }
