@@ -1,5 +1,5 @@
 // Package benchmarks содержит бенчмарк тесты для usecase
-package benchmarks
+package benchmarks_test
 
 import (
 	"context"

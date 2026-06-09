@@ -19,7 +19,7 @@ import (
 
 	"shortener/internal/http/handler"
 	"shortener/internal/http/middleware"
-	repository "shortener/internal/repository/postgres"
+	repository "shortener/internal/repository"
 	"shortener/internal/usecase"
 	_ "shortener/migrations"
 

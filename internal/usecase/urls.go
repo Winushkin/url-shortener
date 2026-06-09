@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"shortener/internal/repository/postgres"
+	"shortener/internal/repository"
 	"shortener/pkg/base62"
 	"time"
 
@@ -15,7 +15,7 @@ import (
 )
 
 type Dependencies struct {
-	Repo postgres.Repository
+	Repo repository.Repository
 	Node *snowflake.Node
 	Rdb  *redis.Client
 }
@@ -30,7 +30,7 @@ type URLUseCase interface {
 
 // urlUseCase реализует бизнес-логику для работы с URL
 type urlUseCase struct {
-	repo postgres.Repository
+	repo repository.Repository
 	node *snowflake.Node
 	rdb  *redis.Client
 }

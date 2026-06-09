@@ -20,8 +20,6 @@ func NewHandler(uc usecase.URLUseCase, domainName string) *Handler {
 }
 
 func (h *Handler) RegisterRouters(mux *http.ServeMux) {
-	// Раздаем главную HTML-страницу. 
-	// Если index.html лежит в корне проекта, то путь будет просто "index.html"
 	mux.HandleFunc("GET /{code}", h.Redirect)
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")

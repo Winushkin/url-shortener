@@ -1,4 +1,4 @@
-package postgres
+package queries
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ const (
 )
 
 func TestInsertURL(t *testing.T) {
-	builder := insertURL(longExample, shortCode)
+	builder := InsertURL(longExample, shortCode)
 	sqlStr, _, err := builder.ToSql()
 
 	expectedSQL := "INSERT INTO urls (long_url,short_code) VALUES ($1,$2)"
@@ -35,7 +35,7 @@ func TestSelectLongURLByShort(t *testing.T) {
 }
 
 func TestIncrementClicks(t *testing.T) {
-	builder := incrementClicks(shortExample)
+	builder := IncrementClicks(shortExample)
 	sqlStr, _, err := builder.ToSql()
 
 	expectedSQL := "UPDATE urls SET clicks_count = clicks_count + 1 WHERE short_code = $1"

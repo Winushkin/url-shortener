@@ -1,4 +1,4 @@
-package postgres
+package queries
 
 import (
 	"fmt"
@@ -18,6 +18,14 @@ const (
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+// InsertURL возвращает запрос на вставку url и short кода
+func InsertURL(url, code string) sq.InsertBuilder {
+	data := map[string]any{
+		longURL:   url,
+		shortCode: code,
+	}
+	return psql.Insert(table).SetMap(data)
+}
 
 // SelectLongURLByShort возвращает запрос для селекта длинной ссылки по короткой
 func SelectLongURLByShort(shortURL string) sq.SelectBuilder {
@@ -32,16 +40,10 @@ func SelectLongURLByShort(shortURL string) sq.SelectBuilder {
 }
 
 // incrementClicks возвращает запрос для обновления счетчика перехода по ссылке
-func incrementClicks(shortURL string) sq.UpdateBuilder {
+func IncrementClicks(shortURL string) sq.UpdateBuilder {
 	return psql.Update(table).
 		Set(clicksCount, sq.Expr(fmt.Sprintf("%s + 1", clicksCount))).
 		Where(sq.Eq{shortCode: shortURL})
 }
 
-func insertURL(url, code string) sq.InsertBuilder {
-	data := map[string]any{
-		longURL:   url,
-		shortCode: code,
-	}
-	return psql.Insert(table).SetMap(data)
-}
+

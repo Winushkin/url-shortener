@@ -1,8 +1,8 @@
-package benchmarks
+package benchmarks_test
 
 import (
 	"context"
-	"shortener/internal/repository/postgres" 
+	"shortener/internal/repository" 
 	"shortener/internal/usecase" 
 	"testing"
 
@@ -40,7 +40,7 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 	pool := setupTestPool(b, ctx)
 	defer pool.Close()
 
-	repo := postgres.NewPostgres(pool)
+	repo := repository.NewPostgres(pool)
 
 	node, err := snowflake.NewNode(1)
 	if err != nil {

@@ -1,11 +1,12 @@
-// Package postgres является слоем взаимодействия с PostgreSQL
-package postgres
+// Package repository является слоем взаимодействия с PostgreSQL
+package repository
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"shortener/internal/entities"
+	"shortener/internal/repository/queries"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,24 +32,21 @@ func NewPostgres(pool *pgxpool.Pool) Repository {
 
 
 func (p *postgres) InsertURL(ctx context.Context, url, shortCode string) error {
-	sql, args, err := insertURL(url, shortCode).ToSql()
+	sql, args, err := queries.InsertURL(url, shortCode).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed to parse query: %w", err)
 	}
 
-	result, err := p.pool.Exec(ctx, sql, args...)
+	_, err = p.pool.Exec(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("exec: %w", err)
-	}
-	if result.RowsAffected() != 1 {
-		return errors.New("more than 1 row affected")
 	}
 
 	return nil
 }
 
 func (p *postgres) GetByShortCode(ctx context.Context, shortCode string) (*entities.URL, error) {
-	sql, args, err := SelectLongURLByShort(shortCode).ToSql()
+	sql, args, err := queries.SelectLongURLByShort(shortCode).ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse query: %w", err)
 	}
@@ -69,7 +67,7 @@ func (p *postgres) GetByShortCode(ctx context.Context, shortCode string) (*entit
 }
 
 func (p *postgres) IncrementClicks(ctx context.Context, shortCode string) error {
-	sql, args, err := incrementClicks(shortCode).ToSql()
+	sql, args, err := queries.IncrementClicks(shortCode).ToSql()
 	if err != nil {
 		return fmt.Errorf("failed to parse query: %w", err)
 	}
@@ -78,7 +76,7 @@ func (p *postgres) IncrementClicks(ctx context.Context, shortCode string) error 
 	if err != nil {
 		return fmt.Errorf("exec: %w", err)
 	}
-	if result.RowsAffected() != 1 {
+	if result.RowsAffected() > 1 {
 		return errors.New("more than 1 row affected")
 	}
 
