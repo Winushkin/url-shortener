@@ -20,7 +20,7 @@ func TestIsValidURL(t *testing.T) {
 		want bool
 	}{
 		{"valid with protocol", "https://example.com", true},
-		{"valid without protocol", "example.com", true},
+		{"valid without protocol", "vitrine.market", true},
 		{"valid starts with ://", "://example.com", true},
 
 		{"invalid, only path", "/only/path", false},
