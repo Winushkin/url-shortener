@@ -54,7 +54,7 @@ func main() {
 	migrate(ctx, pool)
 
 	// UseCases
-	uc := initUC(ctx, pool, cfg.Redis)
+	uc := initUseCase(ctx, pool, cfg.Redis)
 
 	// Хендлеры
 	handler := handler.NewHandler(uc, cfg.DomainName)
@@ -85,7 +85,7 @@ func registerServer(ctx context.Context, handler *handler.Handler, port string) 
 	return server
 }
 
-func initUC(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usecase.URLUseCase {
+func initUseCase(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usecase.URLUseCase {
 	log, ok := logger.GetLoggerFromCtx(ctx)
 	if !ok {
 		panic("logger not found in context")

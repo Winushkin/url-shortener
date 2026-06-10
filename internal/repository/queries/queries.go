@@ -39,7 +39,7 @@ func SelectLongURLByShort(shortURL string) sq.SelectBuilder {
 		Where(sq.Eq{shortCode: shortURL})
 }
 
-// incrementClicks возвращает запрос для обновления счетчика перехода по ссылке
+// IncrementClicks возвращает запрос для обновления счетчика перехода по ссылке
 func IncrementClicks(shortURL string) sq.UpdateBuilder {
 	return psql.Update(table).
 		Set(clicksCount, sq.Expr(fmt.Sprintf("%s + 1", clicksCount))).
