@@ -41,8 +41,9 @@ func IsValidURL(rawURL string) bool {
 		return false
 	}
 
-	if strings.HasPrefix(rawURL, "://") {
-		rawURL = rawURL[3:]
+
+	if remaining, found := strings.CutPrefix(rawURL, "://"); found {
+		rawURL = remaining
 	}
 
 	hasStrictScheme := strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://")

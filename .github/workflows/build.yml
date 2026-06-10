@@ -17,4 +17,4 @@ jobs:
           touch .env
           cp env.example .env
           mkdir deployments/pgdata
-          docker compose -f deployments/docker-compose.yml --env-file configs/.env up -d --build
+          docker compose -f deployments/docker-compose.yml --env-file .env up -d --build
