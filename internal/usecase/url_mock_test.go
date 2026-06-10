@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-
 type URLRepositoryMock struct {
 	mock.Mock
 }
@@ -17,7 +16,7 @@ func (m *URLRepositoryMock) InsertURL(ctx context.Context, url, shortCode string
 	return args.Error(0)
 }
 
-func (m *URLRepositoryMock) GetByShortCode(ctx context.Context, shortCode string) (*entities.URL, error){
+func (m *URLRepositoryMock) GetByShortCode(ctx context.Context, shortCode string) (*entities.URL, error) {
 	args := m.Called(ctx, shortCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

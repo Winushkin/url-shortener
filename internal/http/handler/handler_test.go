@@ -1,12 +1,14 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"shortener/internal/http/handler"
 	"strings"
 	"testing"
 
+	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -46,39 +48,40 @@ func TestHandler_ShortenURL(t *testing.T) {
 				m.On("Shorten", mock.Anything, "https://example.com").Return("abc", nil)
 			},
 			wantStatus:     http.StatusCreated,
-			wantInResponse: `"short_url":"localhost/abc"`,
+			wantInResponse: `{"view_url":"localhost/abc","short_url":"http://localhost/abc"}` + "\n",
 		},
 		{
-			name:           "Ошибка: пустой или невалидный JSON (400 Bad Request)",
-			body:           `{invalid json}`,
-			setupMock:      func(m *URLUseCaseMock) {}, // мок не должен вызываться
-			wantStatus:     http.StatusBadRequest,
-			wantInResponse: "Invalid request body",
+			name:       "Ошибка: пустой или невалидный JSON (400 Bad Request)",
+			body:       `{invalid json}`,
+			setupMock:  func(m *URLUseCaseMock) {},
+			wantStatus: http.StatusBadRequest,
+			// Убрали обратный слэш из строки, чтобы не было ошибки компиляции
+			wantInResponse: "Invalid request body\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, err := logger.NewLoggerContext(context.Background(), false)
+			if err != nil {
+				t.Fatalf("failed to create logger context: %v", err) // Избегайте panic в тестах
+			}
+
 			mockUC := new(URLUseCaseMock)
 			tt.setupMock(mockUC)
 
-			h := handler.NewHandler(mockUC, "localhost")
+			h := handler.NewHandler(mockUC, "localhost", "http")
 
-			// Создаем фейковый HTTP запрос
-			req := httptest.NewRequest(http.MethodPost, "/shorten", strings.NewReader(tt.body))
+			req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/shorten", strings.NewReader(tt.body))
 			req.Header.Set("Content-Type", "application/json")
-
-			// Создаем ResponseRecorder (заменяет ResponseWriter для записи ответа в память)
 			rr := httptest.NewRecorder()
 
-			// Вызываем метод хендлера напрямую
 			h.ShortenURL(rr, req)
 
-			// Проверяем статус-код и тело ответа
 			assert.Equal(t, tt.wantStatus, rr.Code)
+			// JSON может иметь пробелы, поэтому надежнее использовать Contains или JSONEq
 			assert.Contains(t, rr.Body.String(), tt.wantInResponse)
 			mockUC.AssertExpectations(t)
 		})
 	}
 }
-

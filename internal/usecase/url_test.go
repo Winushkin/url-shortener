@@ -83,7 +83,7 @@ func TestURLUseCase_GetLongURL(t *testing.T) {
 
 			// 5. Проверяем результаты с помощью assert
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantLongURL, res)
@@ -145,13 +145,13 @@ func TestURLUseCase_Shorten(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// 1. Инициализируем мок-репозиторий
 			mockRepo := new(URLRepositoryMock)
-			
+
 			// 2. Настраиваем поведение мока для текущего тест-кейса
 			tt.setupMock(mockRepo, tt.args.longURL)
 
 			node, err := snowflake.NewNode(1)
 			require.NoError(t, err)
-			
+
 			// 3. Создаем UseCase и передаем туда наш мок
 			// Передаем также инициализированный канал кликов, чтобы избежать зависаний (как в GetLongURL)
 			cfg := usecase.Dependencies{
@@ -165,12 +165,12 @@ func TestURLUseCase_Shorten(t *testing.T) {
 
 			// 5. Проверяем результаты с помощью assert
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Empty(t, shortCode) // При ошибке короткий код должен быть пустым
 			} else {
 				require.NoError(t, err)
 				assert.NotEmpty(t, shortCode) // Код должен успешно сгенерироваться
-				assert.Len(t, shortCode, 11)   // Например, если ваша длина кода всегда 6 символов
+				assert.Len(t, shortCode, 11)  // Например, если ваша длина кода всегда 6 символов
 			}
 
 			// 6. Проверяем, что все ожидаемые методы мока были вызваны

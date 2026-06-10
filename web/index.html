@@ -40,7 +40,7 @@
 
                 const data = await response.json();
                 // Выводим результат в виде кликабельной ссылки
-                resultDiv.innerHTML = `Короткая ссылка: <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
+                resultDiv.innerHTML = `Короткая ссылка: <a href="${data.short_url}" target="_blank">${data.view_url}</a>`;
             } catch (err) {
                 resultDiv.innerText = 'Произошла ошибка при сокращении';
             }

@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestLoggingMiddleware(t *testing.T) {
 	ctx := context.Background()
 	ctx, _ = logger.NewLoggerContext(ctx, true)
@@ -19,19 +18,17 @@ func TestLoggingMiddleware(t *testing.T) {
 	nextHandlerCalled := false
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextHandlerCalled = true
-		
+
 		log, ok := logger.GetLoggerFromCtx(r.Context())
 		assert.True(t, ok)
 		assert.NotNil(t, log)
-		
+
 		w.WriteHeader(http.StatusTeapot)
 	})
 
 	wrappedHandler := middleware.LoggingMiddleware(nextHandler)
 
-	req := httptest.NewRequest(http.MethodGet, "/test-path", nil)
-
-	req = req.WithContext(ctx) 
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/test-path", nil)
 	rr := httptest.NewRecorder()
 
 	wrappedHandler.ServeHTTP(rr, req)

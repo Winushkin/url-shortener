@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	day         = 24 * time.Hour
+	day        = 24 * time.Hour
 	ctxTimeout = 5 * time.Second
 )
 
@@ -133,7 +133,7 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 }
 
 func (uc *urlUseCase) flushClicksWorker() {
-	for code := range uc.clickChan{
+	for code := range uc.clickChan {
 		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeout)
 		ctx, err := logger.NewLoggerContext(ctx, false)
 		if err != nil {
@@ -145,7 +145,7 @@ func (uc *urlUseCase) flushClicksWorker() {
 			panic("logger not found in context")
 		}
 		err = uc.repo.IncrementClicks(ctx, code)
-		if err != nil{
+		if err != nil {
 			log.Error(ctx, err, "failed to increment clicks")
 		}
 		cancel()

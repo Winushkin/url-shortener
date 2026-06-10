@@ -44,7 +44,6 @@ func main() {
 
 	// Конфиг
 	cfg := config.NewAppConfig()
-	log.Debug(ctx, "cfg Redis", zap.Any("redis", cfg.Redis))
 
 	// БД пул
 	pool := connectPSQL(ctx, cfg.Postgres)
@@ -57,7 +56,8 @@ func main() {
 	uc := initUseCase(ctx, pool, cfg.Redis)
 
 	// Хендлеры
-	handler := handler.NewHandler(uc, cfg.DomainName)
+	protocol := config.GetEnv("PROTOCOL_NAME", "http")
+	handler := handler.NewHandler(uc, cfg.DomainName, protocol)
 
 	// Cервер
 	server := registerServer(ctx, handler, cfg.Port)

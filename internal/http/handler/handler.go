@@ -8,14 +8,16 @@ import (
 )
 
 type Handler struct {
-	useCase usecase.URLUseCase
-	domain  string
+	useCase  usecase.URLUseCase
+	domain   string
+	protocol string
 }
 
-func NewHandler(uc usecase.URLUseCase, domainName string) *Handler {
+func NewHandler(uc usecase.URLUseCase, domainName, protocolName string) *Handler {
 	return &Handler{
-		useCase: uc,
-		domain:  domainName,
+		useCase:  uc,
+		domain:   domainName,
+		protocol: protocolName,
 	}
 }
 
