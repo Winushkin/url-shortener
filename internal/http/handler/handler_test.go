@@ -19,9 +19,13 @@ func TestIsValidURL(t *testing.T) {
 		url  string
 		want bool
 	}{
-		{"valid URL", "https://example.com", true},
-		{"valid URL", "ftp://192.168.1.1", true},
-		{"invalid URL", "invalid-url", false},
+		{"valid with protocol", "https://example.com", true},
+		{"valid without protocol", "example.com", true},
+		{"valid starts with ://", "://example.com", true},
+
+		{"invalid, only path", "/only/path", false},
+		{"invalid random text", "random-text", false},
+		{"empty url", "", false},
 	}
 
 	for _, tt := range tests {

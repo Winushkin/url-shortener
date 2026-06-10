@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"shortener/internal/usecase"
+	"strings"
 )
 
 type Handler struct {
@@ -30,10 +31,30 @@ func (h *Handler) RegisterRouters(mux *http.ServeMux) {
 }
 
 func IsValidURL(rawURL string) bool {
-	parsedURL, err := url.ParseRequestURI(rawURL)
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return false
+	}
+
+	// Отсекаем абсолютные пути сервера
+	if strings.HasPrefix(rawURL, "/") {
+		return false
+	}
+
+	if strings.HasPrefix(rawURL, "://") {
+		rawURL = rawURL[3:]
+	}
+
+	hasStrictScheme := strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://")
+	if !hasStrictScheme {
+		rawURL = "https://" + rawURL
+	}
+
+	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return false
 	}
 
-	return parsedURL.Scheme != "" && parsedURL.Host != ""
+	// Хост не должен быть пустым и должен содержать точку (признак домена)
+	return parsedURL.Host != "" && strings.Contains(parsedURL.Host, ".")
 }

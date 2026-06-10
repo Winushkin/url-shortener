@@ -5,3 +5,4 @@ deployments/test_pgdata/
 .DS_Store
 deployments/.DS_Store/
 coverage.out
+.vscode/
