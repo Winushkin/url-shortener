@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"shortener/internal/broker"
 	"shortener/internal/repository"
 	"shortener/pkg/base62"
 	"time"
@@ -23,7 +24,7 @@ type Dependencies struct {
 	Repo       repository.Repository
 	Node       *snowflake.Node
 	Rdb        *redis.Client
-	ClicksChan chan string
+	Publisher  broker.ClickPublisher
 }
 
 type URLUseCase interface {
@@ -39,7 +40,7 @@ type urlUseCase struct {
 	repo      repository.Repository
 	node      *snowflake.Node
 	rdb       *redis.Client
-	clickChan chan string
+	publisher broker.ClickPublisher
 }
 
 // NewURLUseCase — конструктор слоя бизнес-логики
@@ -54,11 +55,9 @@ func NewURLUseCase(deps Dependencies) URLUseCase {
 	if deps.Rdb != nil {
 		uc.rdb = deps.Rdb
 	}
-	if deps.ClicksChan != nil {
-		uc.clickChan = deps.ClicksChan
-		go uc.flushClicksWorker()
+	if deps.Publisher != nil {
+		uc.publisher = deps.Publisher
 	}
-
 	return uc
 }
 
@@ -86,22 +85,28 @@ func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, erro
 }
 
 func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string, error) {
+	log, ok := logger.GetLoggerFromCtx(ctx)
+	if !ok {
+		return "", errors.New("failed to get logger from ctx")
+	}
 	if uc.rdb != nil {
 		longURL, err := uc.rdb.Get(ctx, shortCode).Result()
 		if err == nil {
-			err = uc.repo.IncrementClicks(ctx, shortCode)
-			if err != nil {
-				return "", fmt.Errorf("incrementClicks: %w", err)
-			}
-
+			go func() {
+				pubCtx := logger.NewContextWithLogger(context.Background(), log)
+				event := broker.ClickEvent{
+					URLCode:   shortCode,
+					ClickedAt: time.Now().Unix(),
+				}
+				err = uc.publisher.PublishClick(pubCtx, event)
+				if err != nil{
+					log.Error(ctx, err, "failed to count Click")
+				}
+			}()
 			return longURL, nil
 		}
 
 		if !errors.Is(err, redis.Nil) {
-			log, ok := logger.GetLoggerFromCtx(ctx)
-			if !ok {
-				return "", errors.New("failed to get logger from ctx in rdb error")
-			}
 			log.Error(ctx, err, "failed to get cache")
 		}
 	}
@@ -124,30 +129,17 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 		}
 	}
 
-	uc.clickChan <- shortCode
-	if err != nil {
-		return "", fmt.Errorf("incrementClicks: %w", err)
-	}
+	go func() {
+		pubCtx := logger.NewContextWithLogger(context.Background(), log)
+		event := broker.ClickEvent{
+			URLCode:   shortCode,
+			ClickedAt: time.Now().Unix(),
+		}
+		err = uc.publisher.PublishClick(pubCtx, event)
+		if err != nil{
+			log.Error(ctx, err, "failed to count Click")
+		}
+	}()
 
 	return record.LongURL, nil
-}
-
-func (uc *urlUseCase) flushClicksWorker() {
-	for code := range uc.clickChan {
-		ctx, cancel := context.WithTimeout(context.Background(), ctxTimeout)
-		ctx, err := logger.NewLoggerContext(ctx, false)
-		if err != nil {
-			panic(fmt.Errorf("failed to create logger context: %w", err))
-		}
-
-		log, ok := logger.GetLoggerFromCtx(ctx)
-		if !ok {
-			panic("logger not found in context")
-		}
-		err = uc.repo.IncrementClicks(ctx, code)
-		if err != nil {
-			log.Error(ctx, err, "failed to increment clicks")
-		}
-		cancel()
-	}
 }

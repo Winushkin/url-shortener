@@ -3,12 +3,13 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"shortener/internal/entities"
 	"shortener/internal/usecase"
 	"testing"
 	"time"
 
-	// "github.com/bwmarrin/snowflake"
+	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,72 +17,66 @@ import (
 )
 
 func TestURLUseCase_GetLongURL(t *testing.T) {
-	// Базовый контекст для вызова основного метода
-	ctx := context.Background()
+	ctx, err := logger.NewLoggerContext(context.Background(), false)
+	if err != nil {
+		panic(fmt.Errorf("failed to create logger context: %w", err))
+	}
 
-	// Описываем структуру одного тест-кейса
 	tests := []struct {
 		name        string
 		shortCode   string
-		setupMock   func(m *URLRepositoryMock)
+		setupMock   func(rm *URLRepositoryMock, pm *PublisherMock)
 		wantLongURL string
 		wantErr     bool
-		asyncWait   time.Duration // сколько подождать, чтобы фоновая горутина успела отработать
+		asyncWait   time.Duration
 	}{
 		{
 			name:      "Успешный редирект и асинхронный клик",
 			shortCode: "go12",
-			setupMock: func(m *URLRepositoryMock) {
-				// 1. Ожидаем синхронный вызов поиска в БД
-				m.On("GetByShortCode", ctx, "go12").
+			setupMock: func(rm *URLRepositoryMock, pm *PublisherMock) {
+				rm.On("GetByShortCode", ctx, "go12").
 					Return(&entities.URL{LongURL: "https://go.dev"}, nil)
 
-				// 2. Ожидаем АСИНХРОННЫЙ вызов инкремента кликов.
-				// Так как внутри go func используется context.Background(),
-				// мы подставляем mock.Anything, потому что точный указатель на контекст мы не поймаем.
-				m.On("IncrementClicks", mock.Anything, "go12").
+				pm.On("PublishClick", mock.Anything, mock.AnythingOfType("ClickEvent")).
 					Return(nil)
 			},
 			wantLongURL: "https://go.dev",
 			wantErr:     false,
-			asyncWait:   5 * time.Millisecond, // 5 миллисекунд хватит Go, чтобы провернуть горутину
+			asyncWait:   5 * time.Millisecond,
 		},
 		{
 			name:      "Ошибка: Код не найден в базе данных",
 			shortCode: "notfound",
-			setupMock: func(m *URLRepositoryMock) {
-				// Если запись не найдена, база вернет ошибку, а инкремент кликов вызываться не должен
+			setupMock: func(m *URLRepositoryMock, pm *PublisherMock) {
 				m.On("GetByShortCode", ctx, "notfound").
 					Return(nil, errors.New("sql: no rows in result set"))
 			},
 			wantLongURL: "",
 			wantErr:     true,
-			asyncWait:   0, // горутина не запускается, ждать нечего
+			asyncWait:   0,
 		},
 	}
 
 	// Запускаем цикл по всем сценариям
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 1. Создаем чистый экземпляр мока для текущего сценария
 			mockRepo := new(URLRepositoryMock)
-			tt.setupMock(mockRepo)
+			mockPublisher := new(PublisherMock)
+			tt.setupMock(mockRepo, mockPublisher)
 
-			// 2. Инициализируем UseCase, передавая структуру зависимостей с моком
-			uc := usecase.NewURLUseCase(usecase.Dependencies{
-				Repo:       mockRepo,
-				ClicksChan: make(chan string),
-			})
+			uc := usecase.NewURLUseCase(
+				usecase.Dependencies{
+					Repo:      mockRepo,
+					Publisher: mockPublisher,
+				},
+			)
 
-			// 3. Вызываем тестируемый метод
 			res, err := uc.GetLongURL(ctx, tt.shortCode)
 
-			// 4. Даем фоновым горутинам (если они есть) время выполниться в памяти
 			if tt.asyncWait > 0 {
 				time.Sleep(tt.asyncWait)
 			}
 
-			// 5. Проверяем результаты с помощью assert
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

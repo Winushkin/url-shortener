@@ -16,12 +16,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 
+	"shortener/internal/broker"
 	"shortener/internal/http/handler"
 	"shortener/internal/http/middleware"
 	repository "shortener/internal/repository"
 	"shortener/internal/usecase"
+	"shortener/pkg/kafka"
+
 	_ "shortener/migrations"
 )
 
@@ -48,16 +52,25 @@ func main() {
 	// БД пул
 	pool := connectPSQL(ctx, cfg.Postgres)
 	defer pool.Close()
+	repo := repository.NewPostgres(pool)
 
 	// Миграции
 	migrate(ctx, pool)
 
+	// Клиент Кафка
+	kafkaClient, kafkaCfg := initKafka(ctx)
+	defer kafkaClient.Close()
+
 	// UseCases
-	uc := initUseCase(ctx, pool, cfg.Redis)
+	uc := initUseCase(ctx, cfg.Redis, kafkaClient, kafkaCfg, repo)
 
 	// Хендлеры
 	protocol := config.GetEnv("PROTOCOL_NAME", "http")
 	handler := handler.NewHandler(uc, cfg.DomainName, protocol)
+
+	clickConsumer := broker.NewConsumer(kafkaClient, repo)
+	log.Info(ctx, "Starting Kafka Consumer...")
+	go clickConsumer.Start(ctx)
 
 	// Cервер
 	server := registerServer(ctx, handler, cfg.Port)
@@ -85,13 +98,44 @@ func registerServer(ctx context.Context, handler *handler.Handler, port string) 
 	return server
 }
 
-func initUseCase(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config) usecase.URLUseCase {
+func initKafka(ctx context.Context) (*kgo.Client, *kafka.Config) {
 	log, ok := logger.GetLoggerFromCtx(ctx)
 	if !ok {
 		panic("logger not found in context")
 	}
 
-	repo := repository.NewPostgres(pool)
+	host := config.GetEnv("KAFKA_HOST", "localhost")
+	port := config.GetEnv("KAFKA_PORT", "9092")
+	topic := config.GetEnv("KAFKA_URLS_TOPIC", "topic")
+
+	cfg := kafka.Config{
+		Host:    host,
+		Port:    port,
+		GroupID: "url-clicks-processors",
+		Topics: map[string]string{
+			"url": topic,
+		},
+	}
+
+	cl, err := kafka.NewClient(ctx, cfg)
+	if err != nil {
+		log.Error(ctx, err, "failed to create Kafka Client")
+		return nil, nil
+	}
+	return cl, &cfg
+}
+
+func initUseCase(
+	ctx context.Context,
+	redisCfg redis.Config,
+	kafkaClient *kgo.Client,
+	kafkaCfg *kafka.Config,
+	repo repository.Repository,
+) usecase.URLUseCase {
+	log, ok := logger.GetLoggerFromCtx(ctx)
+	if !ok {
+		panic("logger not found in context")
+	}
 
 	rdb, err := redis.NewRedisClient(ctx, redisCfg)
 	if err != nil {
@@ -102,10 +146,14 @@ func initUseCase(ctx context.Context, pool *pgxpool.Pool, redisCfg redis.Config)
 	if err != nil {
 		log.Error(ctx, err, "failed to create snowflake Node")
 	}
+
+	pb := broker.NewPublisher(kafkaClient, kafkaCfg.Topics["url"])
+
 	deps := usecase.Dependencies{
-		Repo: repo,
-		Rdb:  rdb,
-		Node: node,
+		Repo:      repo,
+		Rdb:       rdb,
+		Node:      node,
+		Publisher: pb,
 	}
 	uc := usecase.NewURLUseCase(deps)
 
