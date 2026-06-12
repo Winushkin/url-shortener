@@ -1,9 +1,6 @@
 .idea/
 .env
-deployments/pgdata/
-deployments/redis_data/
-deployments/kafka_data/
-deployments/test_pgdata/
+deployments/data/
 .DS_Store
 deployments/.DS_Store/
 coverage.out

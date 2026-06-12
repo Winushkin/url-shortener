@@ -17,7 +17,7 @@ type ClickConsumer struct {
 }
 
 func NewConsumer(client *kgo.Client, repo repository.Repository) *ClickConsumer {
-	client.AddConsumeTopics("url.clicks") 
+	client.AddConsumeTopics("url.clicks")
 	return &ClickConsumer{
 		client: client,
 		repo:   repo,

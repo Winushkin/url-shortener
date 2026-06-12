@@ -41,7 +41,6 @@ func IsValidURL(rawURL string) bool {
 		return false
 	}
 
-
 	if remaining, found := strings.CutPrefix(rawURL, "://"); found {
 		rawURL = remaining
 	}

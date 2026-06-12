@@ -18,6 +18,11 @@ type Config struct {
 	Options map[string]any
 }
 
+const (
+	recordRetries = 5
+	pingTimeout = 5 * time.Second
+)
+
 // NewClient инициализирует и проверяет подключение к Kafka
 func NewClient(ctx context.Context, cfg Config) (*kgo.Client, error) {
 	// Собираем опции конфигурации клиента
@@ -26,7 +31,7 @@ func NewClient(ctx context.Context, cfg Config) (*kgo.Client, error) {
 
 		// Настройки Продюсера для гарантии At-Least-Once
 		kgo.RequiredAcks(kgo.AllISRAcks()), // Ждем подтверждения от всех реплик
-		kgo.RecordRetries(5),               // Количество попыток переотправки при сетевом сбое
+		kgo.RecordRetries(recordRetries),               // Количество попыток переотправки при сетевом сбое
 
 		// Настройки Консумера
 		kgo.ConsumerGroup(cfg.GroupID),
@@ -39,7 +44,7 @@ func NewClient(ctx context.Context, cfg Config) (*kgo.Client, error) {
 	}
 
 	// Делаем обязательный Ping (проверку связи с брокером) перед стартом приложения
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	pingCtx, cancel := context.WithTimeout(ctx, pingTimeout)
 	defer cancel()
 
 	if err := client.Ping(pingCtx); err != nil {

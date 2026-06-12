@@ -2,8 +2,8 @@ package usecase_test
 
 import (
 	"context"
-	"shortener/internal/entities"
 	"shortener/internal/broker"
+	"shortener/internal/entities"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -30,7 +30,7 @@ func (m *URLRepositoryMock) IncrementClicks(ctx context.Context, shortCode strin
 	return args.Error(0)
 }
 
-type PublisherMock struct{
+type PublisherMock struct {
 	mock.Mock
 }
 
@@ -38,4 +38,3 @@ func (m *PublisherMock) PublishClick(ctx context.Context, event broker.ClickEven
 	args := m.Called(ctx, event)
 	return args.Error(0)
 }
-

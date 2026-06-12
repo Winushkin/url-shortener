@@ -72,17 +72,17 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortCode := r.PathValue("code")
-	if shortCode == ""{
+	if shortCode == "" {
 		log.Error(ctx, nil, "Empty shortCode")
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	// 2. Игнорируем запрос иконки, чтобы он не шел в БД
-    if shortCode == "favicon.ico" {
-        w.WriteHeader(http.StatusNoContent) // Возвращаем 204 статус
-        return
-    }
+	if shortCode == "favicon.ico" {
+		w.WriteHeader(http.StatusNoContent) // Возвращаем 204 статус
+		return
+	}
 
 	longURL, err := h.useCase.GetLongURL(r.Context(), shortCode)
 	if err != nil {
@@ -92,8 +92,8 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.HasPrefix(longURL, "http://") && !strings.HasPrefix(longURL, "https://") {
-        longURL = "https://" + longURL
-    }
+		longURL = "https://" + longURL
+	}
 
 	http.Redirect(w, r, longURL, http.StatusFound)
 }

@@ -21,10 +21,10 @@ const (
 )
 
 type Dependencies struct {
-	Repo       repository.Repository
-	Node       *snowflake.Node
-	Rdb        *redis.Client
-	Publisher  broker.ClickPublisher
+	Repo      repository.Repository
+	Node      *snowflake.Node
+	Rdb       *redis.Client
+	Publisher broker.ClickPublisher
 }
 
 type URLUseCase interface {
@@ -84,6 +84,7 @@ func (uc *urlUseCase) Shorten(ctx context.Context, longURL string) (string, erro
 	return code, nil
 }
 
+//nolint:gosec // G118: Изолированный контекст используется намеренно
 func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string, error) {
 	log, ok := logger.GetLoggerFromCtx(ctx)
 	if !ok {
@@ -99,7 +100,7 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 					ClickedAt: time.Now().Unix(),
 				}
 				err = uc.publisher.PublishClick(pubCtx, event)
-				if err != nil{
+				if err != nil {
 					log.Error(ctx, err, "failed to count Click")
 				}
 			}()
@@ -136,7 +137,7 @@ func (uc *urlUseCase) GetLongURL(ctx context.Context, shortCode string) (string,
 			ClickedAt: time.Now().Unix(),
 		}
 		err = uc.publisher.PublishClick(pubCtx, event)
-		if err != nil{
+		if err != nil {
 			log.Error(ctx, err, "failed to count Click")
 		}
 	}()
