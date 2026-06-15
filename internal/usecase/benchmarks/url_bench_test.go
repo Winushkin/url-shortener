@@ -3,7 +3,7 @@ package benchmarks_test
 import (
 	"context"
 	"shortener/internal/usecase/benchmarks/legacy"
-	"shortener/internal/usecase/benchmarks/new"
+	"shortener/internal/usecase/benchmarks/actual"
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
@@ -40,14 +40,14 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 	pool := setupTestPool(b, ctx)
 	defer pool.Close()
 
-	repo := new.NewPostgres(pool)
+	repo := actual.NewPostgres(pool)
 
 	node, err := snowflake.NewNode(1)
 	if err != nil {
 		panic(err)
 	}
 
-	uc := new.NewUseCase(repo, node)
+	uc := actual.NewUseCase(repo, node)
 
 	b.ResetTimer()
 	for range b.N {

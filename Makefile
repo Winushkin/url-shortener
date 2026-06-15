@@ -10,6 +10,7 @@ down:
 testUsecase:
 	docker compose -f deployments/docker-compose.test.yaml up --build -d
 	go test -bench=. -benchmem ./internal/usecase/benchmarks
+	docker compose -f deployments/docker-compose.test.yaml down -v
 
 
 lint:

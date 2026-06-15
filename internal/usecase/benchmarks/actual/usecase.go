@@ -1,5 +1,5 @@
-// Package new содержить обновленую версию для сравнения с legacy кодом 
-package new
+// Package actual содержить обновленую версию для сравнения с legacy кодом
+package actual
 
 import (
 	"context"
@@ -8,8 +8,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 )
-
-
 
 type UseCase struct {
 	repo *postgres
@@ -22,7 +20,6 @@ func NewUseCase(repo *postgres, node *snowflake.Node) *UseCase {
 		node: node,
 	}
 }
-
 
 func (uc *UseCase) Shorten(ctx context.Context, longURL string) (string, error) {
 	id := uc.node.Generate().Int64()
