@@ -2,8 +2,9 @@
 package middleware
 
 import (
-	"crypto/rand"
-	"encoding/hex"
+	"fmt"
+	"sync/atomic"
+
 	"net/http"
 	"time"
 
@@ -80,10 +81,9 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 }
 
 const reqIDLen = 8
+var requestCounter uint64
 
-// Вспомогательная функция для генерации request_id
 func generateRequestID() string {
-	b := make([]byte, reqIDLen)
-	_, _ = rand.Read(b)
-	return hex.EncodeToString(b)
+	id := atomic.AddUint64(&requestCounter, 1)
+	return fmt.Sprintf("%016x", id)
 }

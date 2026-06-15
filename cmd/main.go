@@ -12,10 +12,13 @@ import (
 	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/Winushkin/go-toolkit/postgres"
 	"github.com/Winushkin/go-toolkit/redis"
+	red "github.com/Winushkin/go-toolkit/redis"
 	"github.com/bwmarrin/snowflake"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+
+	// "github.com/redis/go-redis/v9"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 
@@ -127,7 +130,7 @@ func initKafka(ctx context.Context) (*kgo.Client, *kafka.Config) {
 
 func initUseCase(
 	ctx context.Context,
-	redisCfg redis.Config,
+	redisCfg red.Config,
 	kafkaClient *kgo.Client,
 	kafkaCfg *kafka.Config,
 	repo repository.Repository,
@@ -141,7 +144,16 @@ func initUseCase(
 	if err != nil {
 		log.Error(ctx, err, "failed to create redis DB")
 	}
-
+	// newOpts := &redis.Options{
+	// 	Addr:         net.JoinHostPort(redisCfg.Host, redisCfg.Port),
+	// 	Password:     redisCfg.Password,
+	// 	DB:           redisCfg.DB,
+	// 	PoolSize:     1000, // Достаточно для 500+ параллельных горутин
+	// 	MinIdleConns: 50,   // Держать прогретыми в фоне
+	// 	ReadTimeout:  200 * time.Millisecond,
+	// 	WriteTimeout: 200 * time.Millisecond,
+	// }
+	// rdb := redis.NewClient(newOpts)
 	node, err := snowflake.NewNode(1)
 	if err != nil {
 		log.Error(ctx, err, "failed to create snowflake Node")
