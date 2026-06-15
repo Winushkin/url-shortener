@@ -1,6 +1,7 @@
 .idea/
 .env
 deployments/data/
+!deployments/data/kafka
 .DS_Store
 deployments/.DS_Store/
 coverage.out

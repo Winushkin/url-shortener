@@ -73,6 +73,7 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_LOG_LEVEL=DEBUG
     volumes:
       - ./data/kafka:/bitnami/kafka
     networks:

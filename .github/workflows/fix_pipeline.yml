@@ -1,0 +1,42 @@
+name: build.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build Docker images
+        run: |
+          touch .env
+          cp env.example .env
+          mkdir -p deployments/pgdata
+          docker compose -f deployments/docker-compose.yaml --env-file .env up -d --build
+      
+      - name: Wait for services
+        run: sleep 30
+      
+      - name: Check Docker containers status
+        if: always()
+        run: |
+          echo "=== Docker ps output ==="
+          docker ps -a
+          echo ""
+          echo "=== Kafka logs ==="
+          docker logs url_shortener_kafka || echo "Kafka container not found"
+          echo ""
+          echo "=== Postgres logs ==="
+          docker logs url_postgres || echo "Postgres container not found"
+          echo ""
+          echo "=== Redis logs ==="
+          docker logs url_redis_cache || echo "Redis container not found"
+          echo ""
+          echo "=== Docker inspect Kafka ==="
+          docker inspect url_shortener_kafka | grep -A 5 "State" || echo "Could not inspect"
