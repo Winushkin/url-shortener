@@ -1,4 +1,4 @@
-package benchmarks_test
+package legacy
 
 import (
 	"context"
@@ -49,7 +49,6 @@ func (p *legacyPostgres) InsertShortCode(ctx context.Context, id int64, shortCod
 }
 
 const (
-	// Константы с именами таблиц, используемых в запросах
 	table     = "urls"
 	ID        = "id"
 	longURL   = "long_url"

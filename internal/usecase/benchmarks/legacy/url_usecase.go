@@ -1,5 +1,5 @@
-// Package benchmarks_test содержит бенчмарк тесты для usecase
-package benchmarks_test
+// Package legacy содержит бенчмарк тесты для usecase
+package legacy
 
 import (
 	"context"

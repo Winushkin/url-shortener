@@ -2,8 +2,8 @@ package benchmarks_test
 
 import (
 	"context"
-	"shortener/internal/repository"
-	"shortener/internal/usecase"
+	"shortener/internal/usecase/benchmarks/legacy"
+	"shortener/internal/usecase/benchmarks/new"
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
@@ -21,8 +21,8 @@ func BenchmarkUseCase_Old_TwoQueries(b *testing.B) {
 	defer pool.Close()
 
 	// Инициализируем репозиторий, который принимает *pgxpool.Pool
-	oldRepo := NewLegacyPostgres(pool)
-	uc := NewLegacyUseCase(oldRepo)
+	oldRepo := legacy.NewLegacyPostgres(pool)
+	uc := legacy.NewLegacyUseCase(oldRepo)
 
 	b.ResetTimer() // Сбрасываем таймер, чтобы время подключения к БД не учитывалось
 	for range b.N {
@@ -40,19 +40,14 @@ func BenchmarkUseCase_New_SnowflakeOneQuery(b *testing.B) {
 	pool := setupTestPool(b, ctx)
 	defer pool.Close()
 
-	repo := repository.NewPostgres(pool)
+	repo := new.NewPostgres(pool)
 
 	node, err := snowflake.NewNode(1)
 	if err != nil {
 		panic(err)
 	}
 
-	deps := usecase.Dependencies{
-		Repo: repo,
-		Node: node,
-	}
-
-	uc := usecase.NewURLUseCase(deps)
+	uc := new.NewUseCase(repo, node)
 
 	b.ResetTimer()
 	for range b.N {
@@ -70,7 +65,7 @@ func setupTestPool(b *testing.B, ctx context.Context) *pgxpool.Pool {
 	b.Helper()
 
 	// Строка подключения к вашей тестовой БД
-	connStr := "postgres://postgres:1234@localhost:5432/test_urls?sslmode=disable&pool_min_conns=1&pool_max_conns=10"
+	connStr := "postgres://postgres:1234@localhost:5430/test_urls?sslmode=disable&pool_min_conns=1&pool_max_conns=10"
 
 	// Создаем пул соединений pgxpool
 	pool, err := pgxpool.New(ctx, connStr)
