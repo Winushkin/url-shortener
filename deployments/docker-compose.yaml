@@ -74,7 +74,6 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_LOG_LEVEL=DEBUG
     volumes:
       - ./data/kafka:/bitnami/kafka:rw
     networks:
@@ -87,11 +86,34 @@ services:
       retries: 15
       start_period: 30s
 
+   # Сервис, который автоматически создаст топики при запуске
+  kafka-init:
+    image: bitnamilegacy/kafka:3.7.1-debian-12-r4
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [ "sh", "-c" ]
+    networks:
+      - app_net
+    command:
+      - |
+        # Ожидаем, пока Kafka станет доступна на порту 9092
+        echo "Waiting for Kafka to be ready..."
+        /opt/bitnami/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || true
+        
+        echo "Creating Kafka topics..."
+        # Команда создания первого топика (имя: url.clicks, партиций: 3)
+        /opt/bitnami/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --topic url.clicks --partitions 3 --replication-factor 1
+        
+        echo "All topics created successfully!"
+
 
 volumes:
   pgdata:
   redis_data:
   kafka_data:
+  
 
 networks:
   app_net:

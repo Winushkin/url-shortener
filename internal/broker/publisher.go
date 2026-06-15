@@ -36,7 +36,6 @@ func (p *Publisher) PublishClick(ctx context.Context, event ClickEvent) error {
 		panic("logger not found in context")
 	}
 
-	log.Debug(ctx, "kafka is writing the click")
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal click event: %w", err)

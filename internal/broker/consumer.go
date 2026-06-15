@@ -29,7 +29,6 @@ func (c *ClickConsumer) Start(ctx context.Context) {
 	if !ok {
 		panic("logger not found in context")
 	}
-	log.Info(ctx, "click Consumer started")
 
 	for {
 		fetches := c.client.PollFetches(ctx)
@@ -38,7 +37,6 @@ func (c *ClickConsumer) Start(ctx context.Context) {
 				log.Error(ctx, fe.Err, "Kafka Error", zap.String("Topic", fe.Topic), zap.Int32("Partition", fe.Partition))
 			}
 		}
-		log.Debug(ctx, "Новый клик пришел")
 		iter := fetches.RecordIter()
 		for !iter.Done() {
 			record := iter.Next()
@@ -49,13 +47,11 @@ func (c *ClickConsumer) Start(ctx context.Context) {
 				continue
 			}
 
-			log.Debug(ctx, "Записываем новый клик")
 			err := c.repo.IncrementClicks(ctx, event.URLCode)
 			if err != nil {
 				log.Error(ctx, err, "failed to save click to db")
 				// TODO: DLQ error handling
 			}
-			log.Debug(ctx, "Записали новый клик")
 		}
 	}
 }
