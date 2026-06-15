@@ -80,10 +80,9 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-const reqIDLen = 8
-var requestCounter uint64
+var requestCounter atomic.Uint64
 
 func generateRequestID() string {
-	id := atomic.AddUint64(&requestCounter, 1)
+	id := requestCounter.Add(1) 
 	return fmt.Sprintf("%016x", id)
 }

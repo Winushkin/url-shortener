@@ -12,7 +12,6 @@ import (
 	"github.com/Winushkin/go-toolkit/logger"
 	"github.com/Winushkin/go-toolkit/postgres"
 	"github.com/Winushkin/go-toolkit/redis"
-	red "github.com/Winushkin/go-toolkit/redis"
 	"github.com/bwmarrin/snowflake"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -130,7 +129,7 @@ func initKafka(ctx context.Context) (*kgo.Client, *kafka.Config) {
 
 func initUseCase(
 	ctx context.Context,
-	redisCfg red.Config,
+	redisCfg redis.Config,
 	kafkaClient *kgo.Client,
 	kafkaCfg *kafka.Config,
 	repo repository.Repository,
