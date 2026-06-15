@@ -60,6 +60,7 @@ services:
       - ../.env
     ports:
       - "9094:9094"
+    user: "root"
     environment:
       # Настройки KRaft режима
       - KAFKA_CFG_NODE_ID=1
@@ -75,7 +76,7 @@ services:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_LOG_LEVEL=DEBUG
     volumes:
-      - ./data/kafka:/bitnami/kafka
+      - ./data/kafka:/bitnami/kafka:rw
     networks:
       - app_net
     restart: unless-stopped

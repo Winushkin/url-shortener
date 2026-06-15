@@ -1,4 +1,4 @@
-name: build.yml
+name: fix_pipeline.yml
 on:
   push:
     branches:
