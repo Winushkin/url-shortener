@@ -6,3 +6,4 @@ deployments/data/
 deployments/.DS_Store/
 coverage.out
 .vscode/
+__pycache__
