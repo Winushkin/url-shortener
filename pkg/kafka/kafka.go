@@ -35,6 +35,7 @@ func NewClient(ctx context.Context, cfg Config) (*kgo.Client, error) {
 
 		// Настройки Консумера
 		kgo.ConsumerGroup(cfg.GroupID),
+		kgo.ConsumeTopics("url.clicks"),
 		kgo.DisableAutoCommit(), // Отключаем автокоммит (будем коммитить вручную после записи в БД)
 	}
 
