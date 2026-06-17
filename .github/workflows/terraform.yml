@@ -1,0 +1,61 @@
+name: "Terraform IaC"
+
+on:
+  push:
+    branches:
+      - test # Запуск при пуше в main (накатывание изменений)
+  pull_request:
+    branches:
+      - test
+    #   - main # Запуск при создании PR (только проверка)
+
+jobs:
+  terraform:
+    name: "Terraform Action"
+    runs-on: ubuntu-latest
+
+    # Прокидываем секреты из GitHub в переменные окружения для Terraform
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.YC_STATIC_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_STATIC_SECRET_KEY }}
+      YC_KEY_JSON: ${{ secrets.YC_KEY_JSON }}
+      YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      # Настраиваем зеркало Яндекса внутри GitHub-воркера, чтобы обойти блокировку
+      - name: Configure Yandex Terraform Mirror
+        run: |
+          cat <<EOF > ~/.terraformrc
+          provider_installation {
+            network_mirror {
+              url     = "https://yandexcloud.net"
+              include = ["registry.terraform.io/*/*"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/*/*"]
+            }
+          }
+          EOF
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check # Проверяет чистоту и стиль кода
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+        # План запускается всегда, чтобы показать, что изменится
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+        # Apply сработает ТОЛЬКО если код влился в ветку main
