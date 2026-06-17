@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
-	// "github.com/redis/go-redis/v9"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 
@@ -29,6 +28,10 @@ import (
 	"shortener/pkg/kafka"
 
 	_ "shortener/migrations"
+	// "github.com/prometheus/client_golang/prometheus/collectors"
+
+	// "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -73,6 +76,16 @@ func main() {
 	clickConsumer := broker.NewConsumer(kafkaClient, repo)
 	log.Info(ctx, "Starting Kafka Consumer...")
 	go clickConsumer.Start(ctx)
+
+	// Prometheus
+	promPort := ":" + config.GetEnv("PROMETHEUS_PORT", "2112")
+	log.Debug(ctx, "prometheus", zap.String("port", promPort))
+	go func() {
+        http.Handle("/metrics", promhttp.Handler())
+        if err := http.ListenAndServe(promPort, nil); err != nil {
+            log.Error(ctx, err, "Failed to start Prometheus metrics server")
+        }
+    }()
 
 	// Cервер
 	server := registerServer(ctx, handler, cfg.Port)
@@ -207,4 +220,8 @@ func migrate(ctx context.Context, pool *pgxpool.Pool) {
 		log.Error(ctx, err, "Ошибка выполнения миграций")
 	}
 	log.Info(ctx, "Миграции успешно применены!")
+}
+
+func initPrometheus(){
+
 }
