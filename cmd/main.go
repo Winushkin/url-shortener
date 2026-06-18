@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
-	// "github.com/redis/go-redis/v9"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 
@@ -29,6 +28,7 @@ import (
 	"shortener/pkg/kafka"
 
 	_ "shortener/migrations"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -36,6 +36,7 @@ const (
 	readHeaderTimeout = 3 * time.Second
 )
 
+//nolint:gosec
 func main() {
 	// Логгер
 	ctx, err := logger.NewLoggerContext(context.Background(), devMode)
@@ -74,6 +75,16 @@ func main() {
 	log.Info(ctx, "Starting Kafka Consumer...")
 	go clickConsumer.Start(ctx)
 
+	// Prometheus
+	promPort := ":" + config.GetEnv("PROMETHEUS_PORT", "2112")
+	log.Debug(ctx, "prometheus", zap.String("port", promPort))
+	go func() {
+        http.Handle("/metrics", promhttp.Handler())
+        if err := http.ListenAndServe(promPort, nil); err != nil {
+            log.Error(ctx, err, "Failed to start Prometheus metrics server")
+        }
+    }()
+
 	// Cервер
 	server := registerServer(ctx, handler, cfg.Port)
 
@@ -86,7 +97,7 @@ func main() {
 func registerServer(ctx context.Context, handler *handler.Handler, port string) *http.Server {
 	mux := http.NewServeMux()
 	handler.RegisterRouters(mux)
-	wrappedMux := middleware.LoggingMiddleware(mux)
+	wrappedMux := middleware.TelemetryMiddleware(mux)
 
 	server := &http.Server{
 		Addr:              ":" + port,

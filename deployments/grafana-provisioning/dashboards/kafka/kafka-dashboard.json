@@ -1,0 +1,63 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Kafka Traffic (Messages/sec)",
+      "description": "Сколько сообщений в секунду залетает в каждый топик.\nЕсли график ушел в ноль при живых пользователях — отвалился Producer.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum(rate(kafka_topic_partition_current_offset[1m])) by (topic)", "refId": "A" }]
+    },
+    {
+      "title": "Consumer Group Lag (Unprocessed Messages)",
+      "description": "Сколько сообщений приложение успело получить в Kafka, но еще не успело вычитать и обработать. Если график постоянно сильно растет, то приложение не справляется",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [{ "expr": "sum(kafka_consumergroup_lag) by (consumergroup, topic)", "refId": "A" }]
+    },
+    {
+      "title": "Total Messages in Topics",
+      "description": "Общее накопительное количество сообщений",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 8 },
+      "targets": [{ "expr": "sum(kafka_topic_partition_current_offset) by (topic)", "refId": "A" }]
+    },
+    {
+      "title": "Topic Partitions Count",
+      "description": "Кол-во партиций для каждого топика.",
+      "type": "bargauge",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 8 },
+      "targets": [{ "expr": "kafka_topic_partitions", "refId": "A" }]
+    },
+    {
+      "title": "Active Consumer Groups",
+      "description": "Сколько независимых приложений или воркеров сейчас читают Kafka.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 8 },
+      "targets": [{ "expr": "kafka_consumergroup_members", "refId": "A" }]
+    },
+    {
+      "title": "Exporter Status",
+      "description": "Жив ли сам сборщик метрик. Выдает 1 (UP), если Prometheus успешно до него достучался, и 0 (DOWN), если связь оборвалась.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 8 },
+      "targets": [{ "expr": "up{job=\"kafka\"}", "refId": "A" }]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": { "list": [] },
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Kafka",
+  "version": 1
+}

@@ -6,9 +6,7 @@ buildup:
 
 down:
 	docker compose -f deployments/docker-compose.yaml --env-file .env down -v
-	rm -r deployments/data/kafka
-	rm -r deployments/data/redis
-	rm -r deployments/data/postgres
+	rm -r deployments/data
 
 testUsecase:
 	docker compose -f deployments/docker-compose.test.yaml up --build -d
