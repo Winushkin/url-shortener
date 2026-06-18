@@ -1,0 +1,65 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+      {
+      "title": "Active Goroutines",
+      "description": "Количество одновременно выполняемых горутин.\nРезкий линейный рост вверх указывает на утечку горутин (goroutine leak) — например, когда функции блокируются на незакрытых каналах или HTTP-боди.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [{
+            "expr": "go_goroutines{job='go-app'}",
+            "legendFormat": "url-app",
+            "refId": "A" 
+      }]
+    },
+    {
+      "title": "Go Heap Memory Usage (mb)",
+      "description": "Объем выделенной памяти в куче (Heap), которая занята живыми объектами и не собрана GC.\nПозволяет вовремя заметить утечки памяти (Memory Leaks).",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [{
+            "expr": "go_memstats_alloc_bytes{job='go-app'}/1024/1024",
+            "legendFormat": "url-app",
+            "refId": "A" 
+      }]
+    },
+    {
+      "title": "Garbage Collector Pause Time (ms)",
+      "description": "Продолжительность пауз остановки мира (Stop-The-World) во время работы сборщика мусора.\nЕсли паузы растут, приложение начинает «фризить» и задерживать ответы клиентам.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [{
+            "expr": "rate(go_gc_duration_seconds_sum{job='go-app'}[5m]) * 1000",
+            "legendFormat": "url-app",
+            "refId": "A" 
+      }]
+    },
+    {
+      "title": "OS Threads Count",
+      "description": "Количество потоков операционной системы, созданных Go-рантаймом (суб-потоки для M в схеме планировщика GMP).\nРезкий рост говорит о частых блокировках на уровне системных вызовов (cgo, файловый ввод-вывод).",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [{
+            "expr": "go_threads{job='go-app'}",
+            "legendFormat": "url-app",
+            "refId": "A" 
+      }]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": { "list": [] },
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "App Runtime",
+  "version": 1
+}

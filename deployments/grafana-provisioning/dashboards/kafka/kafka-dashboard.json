@@ -58,6 +58,6 @@
   "time": { "from": "now-5m", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "Kafka Main Infrastructure",
+  "title": "Kafka",
   "version": 1
 }

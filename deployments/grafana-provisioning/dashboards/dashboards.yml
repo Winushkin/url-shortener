@@ -1,11 +1,30 @@
 apiVersion: 1
 
 providers:
-  - name: 'Kafka Dashboards'
-    orgId: 1
-    folder: 'Kafka'
+  - name: 'App Dashboards'
     type: file
     disableDeletion: false
-    editable: true
+    editable: false
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/app
+    
+  - name: 'Kafka Dashboards'
+    type: file
+    disableDeletion: false
+    editable: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/kafka
+  
+  - name: 'Postgres Dashboards'
+    type: file
+    disableDeletion: false
+    editable: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/postgres
+
+  - name: 'Redis Dashboards'
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/redis
