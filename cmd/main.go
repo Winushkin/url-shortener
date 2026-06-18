@@ -28,9 +28,6 @@ import (
 	"shortener/pkg/kafka"
 
 	_ "shortener/migrations"
-	// "github.com/prometheus/client_golang/prometheus/collectors"
-
-	// "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -39,6 +36,7 @@ const (
 	readHeaderTimeout = 3 * time.Second
 )
 
+//nolint:gosec
 func main() {
 	// Логгер
 	ctx, err := logger.NewLoggerContext(context.Background(), devMode)
@@ -99,7 +97,7 @@ func main() {
 func registerServer(ctx context.Context, handler *handler.Handler, port string) *http.Server {
 	mux := http.NewServeMux()
 	handler.RegisterRouters(mux)
-	wrappedMux := middleware.LoggingMiddleware(mux)
+	wrappedMux := middleware.TelemetryMiddleware(mux)
 
 	server := &http.Server{
 		Addr:              ":" + port,
@@ -220,8 +218,4 @@ func migrate(ctx context.Context, pool *pgxpool.Pool) {
 		log.Error(ctx, err, "Ошибка выполнения миграций")
 	}
 	log.Info(ctx, "Миграции успешно применены!")
-}
-
-func initPrometheus(){
-
 }

@@ -121,6 +121,35 @@ services:
       kafka:
         condition: service_healthy
 
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: url_shortener_postgres_exporter
+    env_file:
+      - ../.env
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+      - app_net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: url_shortener_redis_exporter
+    environment:
+      # Указываем адрес контейнера Redis внутри docker-сети
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+    networks:
+      - monitoring
+      - app_net
+
   prometheus:
     image: prom/prometheus:v2.45.0
     container_name: url_shortener_prometheus
@@ -144,10 +173,12 @@ services:
       - "3000:3000"
     volumes:
       - ./data/grafana:/var/lib/grafana
+
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+         
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
     restart: unless-stopped
     networks:
       - monitoring
