@@ -102,7 +102,6 @@ func TelemetryMiddleware(next http.Handler) http.Handler {
 		}
 		statusCodeStr := strconv.Itoa(statusCode)
 
-
 		httpRequestsTotal.WithLabelValues(pathPattern, r.Method, statusCodeStr).Inc()
 		httpDuration.WithLabelValues(pathPattern, r.Method).Observe(duration.Seconds())
 

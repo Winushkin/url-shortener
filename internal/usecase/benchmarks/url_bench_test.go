@@ -2,8 +2,8 @@ package benchmarks_test
 
 import (
 	"context"
-	"shortener/internal/usecase/benchmarks/legacy"
 	"shortener/internal/usecase/benchmarks/actual"
+	"shortener/internal/usecase/benchmarks/legacy"
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
