@@ -4,11 +4,12 @@ build:
 buildup:
 	docker compose -f deployments/docker-compose.yaml --env-file .env up --build -d
 
+up:
+	docker compose -f deployments/docker-compose.yaml --env-file .env up -d
+
 down:
 	docker compose -f deployments/docker-compose.yaml --env-file .env down -v
-	rm -r deployments/data/kafka
-	rm -r deployments/data/redis
-	rm -r deployments/data/postgres
+	rm -r deployments/data
 
 testUsecase:
 	docker compose -f deployments/docker-compose.test.yaml up --build -d

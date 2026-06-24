@@ -17,7 +17,6 @@ type ClickConsumer struct {
 }
 
 func NewConsumer(client *kgo.Client, repo repository.Repository) *ClickConsumer {
-	client.AddConsumeTopics("url.clicks")
 	return &ClickConsumer{
 		client: client,
 		repo:   repo,
@@ -38,6 +37,7 @@ func (c *ClickConsumer) Start(ctx context.Context) {
 			}
 		}
 		iter := fetches.RecordIter()
+		recordsForCommit := make([]*kgo.Record, 0)
 		for !iter.Done() {
 			record := iter.Next()
 
@@ -50,7 +50,15 @@ func (c *ClickConsumer) Start(ctx context.Context) {
 			err := c.repo.IncrementClicks(ctx, event.URLCode)
 			if err != nil {
 				log.Error(ctx, err, "failed to save click to db")
+				continue
 				// TODO: DLQ error handling
+			}
+			recordsForCommit = append(recordsForCommit, record)
+		}
+		if len(recordsForCommit) > 0 {
+			err := c.client.CommitRecords(ctx, recordsForCommit...)
+			if err != nil {
+				log.Error(ctx, err, "failed to commit offsets to Kafka")
 			}
 		}
 	}

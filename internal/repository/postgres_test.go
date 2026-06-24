@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 	"time"
 
@@ -59,13 +58,15 @@ func migrate(ctx context.Context, pool *pgxpool.Pool) {
 
 // TestMain запускает тестовую среду с помощью testcontainers, выполняет миграции и очищает ресурсы после тестов.
 func TestMain(m *testing.M) {
-	ctx := context.Background()
-	ctx, err := logger.NewLoggerContext(ctx, true)
+	mainCtx := context.Background()
+	mainCtx, err := logger.NewLoggerContext(mainCtx, true)
 	if err != nil {
 		panic(fmt.Errorf("failed to create logger context: %w", err))
 	}
 
-	dbContainer, err := pgContainer.Run(ctx,
+	startCtx, startCancel := context.WithTimeout(mainCtx, 30*time.Second)
+
+	dbContainer, err := pgContainer.Run(startCtx,
 		"postgres:17",
 		pgContainer.WithDatabase("test_db"),
 		pgContainer.WithUsername("test_user"),
@@ -76,37 +77,41 @@ func TestMain(m *testing.M) {
 		),
 	)
 	if err != nil {
+		startCancel()
 		log.Fatalf("Failed to start container: %s", err)
 	}
 
 	args := []string{
 		"sslmode=disable",
 		"pool_min_conns=1",
-		"pool_min_conns=2",
+		"pool_max_conns=2",
 	}
 
-	connStr, err := dbContainer.ConnectionString(ctx, args...)
+	connStr, err := dbContainer.ConnectionString(mainCtx, args...)
 	if err != nil {
 		log.Fatalf("Failed create conn string: %s", err)
 	}
 
-	testDB, err = pgxpool.New(ctx, connStr)
+	testDB, err = pgxpool.New(mainCtx, connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %s", err)
 	}
 
-	migrate(ctx, testDB)
+	migrate(mainCtx, testDB)
 
 	repo = repository.NewPostgres(testDB)
 
-	code := m.Run()
+	_ = m.Run()
 
 	testDB.Close()
-	if err = dbContainer.Terminate(ctx); err != nil {
+
+	// 3. Для удаления контейнера создаем новый чистый контекст, так как mainCtx мог быть затронут
+	termCtx, termCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer termCancel()
+
+	if err = dbContainer.Terminate(termCtx); err != nil {
 		log.Printf("Failed to terminate container: %s", err)
 	}
-
-	os.Exit(code)
 }
 
 // cleanDB выполняет очистку указанной таблицы в базе данных, удаляя все записи и сбрасывая идентификаторы.
@@ -118,7 +123,8 @@ func cleanDB(t *testing.T, ctx context.Context) {
 }
 
 func TestRepo_InsertURL(t *testing.T) {
-	ctx := t.Context()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
 	ctx, err := logger.NewLoggerContext(ctx, true)
 	if err != nil {
 		panic(fmt.Errorf("failed to create logger context: %w", err))
@@ -131,13 +137,13 @@ func TestRepo_InsertURL(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		prepare func(t *testing.T)
+		prepare func(t *testing.T, ctx context.Context)
 		args    args
 		wantErr bool
 	}{
 		{
 			name: "Успешное сохранение новой ссылки",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 			},
 			args: args{
@@ -148,7 +154,7 @@ func TestRepo_InsertURL(t *testing.T) {
 		},
 		{
 			name: "Ошибка: дубликат short_code",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 				_, err := testDB.Exec(ctx, "INSERT INTO urls (long_url, short_code) VALUES ($1, $2)", "https://yandex.ru", "duplicate")
 				if err != nil {
@@ -165,7 +171,7 @@ func TestRepo_InsertURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.prepare(t)
+			tt.prepare(t, ctx)
 
 			err := repo.InsertURL(ctx, tt.args.url, tt.args.shortCode)
 			if tt.wantErr {
@@ -183,15 +189,9 @@ func TestRepo_InsertURL(t *testing.T) {
 }
 
 func TestURLRepo_GetByShortCode(t *testing.T) {
-	ctx := t.Context()
-	ctx, err := logger.NewLoggerContext(ctx, true)
-	if err != nil {
-		panic(fmt.Errorf("failed to create logger context: %w", err))
-	}
-
 	tests := []struct {
 		name      string
-		prepare   func(t *testing.T)
+		prepare   func(t *testing.T, ctx context.Context)
 		shortCode string
 		want      *entities.URL
 		wantErr   bool
@@ -199,7 +199,7 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 	}{
 		{
 			name: "Успешный поиск существующего URL",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 				_, err := testDB.Exec(ctx, "INSERT INTO urls (long_url, short_code, clicks_count) VALUES ($1, $2, $3)", "https://go.dev", "go123", 5)
 				if err != nil {
@@ -216,7 +216,7 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 		},
 		{
 			name: "Ссылка не найдена (возвращаем nil или доменную ошибку)",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 			},
 			shortCode: "not_exist",
@@ -227,7 +227,13 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.prepare(t)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			ctx, err := logger.NewLoggerContext(ctx, true)
+			if err != nil {
+				panic(fmt.Errorf("failed to create logger context: %w", err))
+			}
+			tt.prepare(t, ctx)
 
 			res, err := repo.GetByShortCode(ctx, tt.shortCode)
 			if tt.wantErr {
@@ -244,22 +250,16 @@ func TestURLRepo_GetByShortCode(t *testing.T) {
 }
 
 func TestURLRepo_IncrementClicks(t *testing.T) {
-	ctx := t.Context()
-	ctx, err := logger.NewLoggerContext(ctx, true)
-	if err != nil {
-		panic(fmt.Errorf("failed to create logger context: %w", err))
-	}
-
 	tests := []struct {
 		name       string
-		prepare    func(t *testing.T)
+		prepare    func(t *testing.T, ctx context.Context)
 		shortCode  string
 		wantClicks int64
 		wantErr    bool
 	}{
 		{
 			name: "Инкремент счетчика с нуля",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 				_, err := testDB.Exec(ctx, "INSERT INTO urls (long_url, short_code) VALUES ($1, $2)", "https://github.com", "abcdefghigk")
 				if err != nil {
@@ -272,7 +272,7 @@ func TestURLRepo_IncrementClicks(t *testing.T) {
 		},
 		{
 			name: "Инкремент уже существующего счетчика",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 				_, err := testDB.Exec(ctx, "INSERT INTO urls (long_url, short_code, clicks_count) VALUES ($1, $2, $3)", "https://habr.com", "habr7", 42)
 				if err != nil {
@@ -285,7 +285,7 @@ func TestURLRepo_IncrementClicks(t *testing.T) {
 		},
 		{
 			name: "Попытка инкремента несуществующего кода (ошибки нет, просто 0 строк изменено)",
-			prepare: func(t *testing.T) {
+			prepare: func(t *testing.T, ctx context.Context) {
 				cleanDB(t, ctx)
 			},
 			shortCode: "ghost",
@@ -295,9 +295,15 @@ func TestURLRepo_IncrementClicks(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.prepare(t)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			ctx, err := logger.NewLoggerContext(ctx, true)
+			if err != nil {
+				panic(fmt.Errorf("failed to create logger context: %w", err))
+			}
+			tt.prepare(t, ctx)
 
-			err := repo.IncrementClicks(ctx, tt.shortCode)
+			err = repo.IncrementClicks(ctx, tt.shortCode)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

@@ -26,7 +26,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		w.WriteHeader(http.StatusTeapot)
 	})
 
-	wrappedHandler := middleware.LoggingMiddleware(nextHandler)
+	wrappedHandler := middleware.TelemetryMiddleware(nextHandler)
 
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/test-path", nil)
 	rr := httptest.NewRecorder()

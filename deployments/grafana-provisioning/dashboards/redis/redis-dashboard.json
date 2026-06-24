@@ -1,0 +1,70 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+        "title": "Redis Connected Clients",
+        "description": "Количество активных сетевых соединений от вашего Go-приложения к Redis в данный момент.",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+        "targets": [{
+          "expr": "redis_connected_clients",
+          "legendFormat": "Connections",
+          "refId": "A"
+          }]
+    },
+    {
+        "title": "Redis Memory Usage",
+        "description": "Объем оперативной памяти, занятый данными в Redis, по отношению к максимальному лимиту.\nЕсли память заполнится, Redis начнет удалять ключи или выдавать ошибки записи.",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+        "targets": [
+        { "expr": "redis_memory_used_bytes /1024 /1024", "legendFormat": "Used Memory", "refId": "A" },
+        { "expr": "redis_memory_max_bytes", "legendFormat": "Max Memory Limit", "refId": "B" }
+        ]
+    },
+    {
+        "title": "Redis Cache Hit Ratio",
+        "description": "Эффективность кэширования в процентах.\nПоказывает, как часто приложение находит нужный ключ в Redis (Hit) по сравнению с промахами (Miss).",
+        "type": "timeseries",
+        "fieldConfig" : {
+            "defaults": {
+                "max": 101,
+                "min": 0
+            }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+        "targets": [{ 
+          "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) * 100", 
+          "legendFormat": "Cache rate %",
+          "refId": "A" 
+        }]
+    },
+    {
+        "title": "Redis Uptime (min)",
+        "description": "Время непрерывной работы контейнера Redis в секундах.\nЕсли график резко падает в ноль — контейнер перезапускался (например, упал из-за нехватки памяти OOM).",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+        "targets": [{
+          "expr": "redis_uptime_in_seconds / 60",
+          "legendFormat": "minutes alive",
+          "refId": "A" }
+          ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": { "list": [] },
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Redis",
+  "version": 1
+}

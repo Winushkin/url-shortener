@@ -42,7 +42,7 @@ services:
       - "${SERVER_PORT}:${SERVER_PORT}"
     env_file:
       - ../.env
-    depends_on:
+    depends_on:        
       postgres:
         condition: service_healthy
       redis:
@@ -108,8 +108,86 @@ services:
         
         echo "All topics created successfully!"
 
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: url_shortener_kafka_exporter
+    ports:
+      - "9308:9308"
+    command: --kafka.server=kafka:9092
+    networks:
+      - app_net
+      - monitoring
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: url_shortener_postgres_exporter
+    env_file:
+      - ../.env
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+      - app_net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: url_shortener_redis_exporter
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+    networks:
+      - monitoring
+      - app_net
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: url_shortener_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - monitoring
+      - app_net
+  
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: url_shortener_grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
+      - GF_SERVER_DOMAIN=${DOMAIN_NAME}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/monitoring/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    restart: unless-stopped
+    networks:
+      - monitoring
 
 volumes:
+  grafana:
+  prometheus:
   pgdata:
   redis_data:
   kafka_data:
@@ -117,4 +195,6 @@ volumes:
 
 networks:
   app_net:
+    driver: bridge
+  monitoring:
     driver: bridge

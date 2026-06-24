@@ -20,7 +20,7 @@ type Config struct {
 
 const (
 	recordRetries = 5
-	pingTimeout = 5 * time.Second
+	pingTimeout   = 5 * time.Second
 )
 
 // NewClient инициализирует и проверяет подключение к Kafka
@@ -31,10 +31,11 @@ func NewClient(ctx context.Context, cfg Config) (*kgo.Client, error) {
 
 		// Настройки Продюсера для гарантии At-Least-Once
 		kgo.RequiredAcks(kgo.AllISRAcks()), // Ждем подтверждения от всех реплик
-		kgo.RecordRetries(recordRetries),               // Количество попыток переотправки при сетевом сбое
+		kgo.RecordRetries(recordRetries),   // Количество попыток переотправки при сетевом сбое
 
 		// Настройки Консумера
 		kgo.ConsumerGroup(cfg.GroupID),
+		kgo.ConsumeTopics("url.clicks"),
 		kgo.DisableAutoCommit(), // Отключаем автокоммит (будем коммитить вручную после записи в БД)
 	}
 
