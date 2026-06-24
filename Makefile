@@ -4,6 +4,9 @@ build:
 buildup:
 	docker compose -f deployments/docker-compose.yaml --env-file .env up --build -d
 
+up:
+	docker compose -f deployments/docker-compose.yaml --env-file .env up -d
+
 down:
 	docker compose -f deployments/docker-compose.yaml --env-file .env down -v
 	rm -r deployments/data
