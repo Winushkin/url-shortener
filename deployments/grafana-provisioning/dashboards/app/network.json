@@ -13,8 +13,8 @@
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
             "targets": [{ 
-                "expr": "sum(rate(http_requests_total[5m])) by (method, handler)", 
-                "legendFormat": "{{method}} {{handler}}",
+                "expr": "sum(rate(http_requests_total{method!~'CONNECT|TRACE', path!='GET /{$}'}[5m])) by (method, path)", 
+                "legendFormat": "{{method}} {{path}}",
                 "refId": "A" 
             }]
         },
@@ -41,9 +41,9 @@
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
             "targets": [
-            { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99 (99%)", "refId": "A" },
-            { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95 (95%)", "refId": "B" },
-            { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50 (Median)", "refId": "C" }
+                { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99 (99%)", "refId": "A" },
+                { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95 (95%)", "refId": "B" },
+                { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50 (Median)", "refId": "C" }
             ]
         }
   ],

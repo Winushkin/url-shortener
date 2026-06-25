@@ -1,34 +1,94 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сокращатель ссылок</title>
     <style>
+        /* ── CSS-переменные: светлая тема ── */
+        :root {
+            --bg:               #f7f8fa;
+            --nav-bg:           #ffffff;
+            --nav-border:       #e0e0e0;
+            --text:             #222222;
+            --text-muted:       #555555;
+            --input-bg:         #ffffff;
+            --input-border:     #cccccc;
+            --monitoring-bg:    #f0f6ff;
+            --monitoring-border:#cce0ff;
+            --toggle-bg:        #eeeeee;
+            --toggle-hover:     #dddddd;
+            --accent:           #007BFF;
+            --accent-hover:     #0062cc;
+            --transition:       background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        /* ── Тёмная тема через атрибут (ручной режим) ── */
+        [data-theme="dark"] {
+            --bg:               #111318;
+            --nav-bg:           #1c1f2b;
+            --nav-border:       #2e3245;
+            --text:             #e8eaf0;
+            --text-muted:       #9ba3bf;
+            --input-bg:         #1c1f2b;
+            --input-border:     #3a3f5c;
+            --monitoring-bg:    #162040;
+            --monitoring-border:#2a4080;
+            --toggle-bg:        #2e3245;
+            --toggle-hover:     #3a4060;
+        }
+
+        /* ── Тёмная тема через ОС (если пользователь не переключил вручную) ── */
+        @media (prefers-color-scheme: dark) {
+            [data-theme="auto"] {
+                --bg:               #111318;
+                --nav-bg:           #1c1f2b;
+                --nav-border:       #2e3245;
+                --text:             #e8eaf0;
+                --text-muted:       #9ba3bf;
+                --input-bg:         #1c1f2b;
+                --input-border:     #3a3f5c;
+                --monitoring-bg:    #162040;
+                --monitoring-border:#2a4080;
+                --toggle-bg:        #2e3245;
+                --toggle-hover:     #3a4060;
+            }
+        }
+
+        /* ── Базовые стили ── */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: Arial, sans-serif;
-            background: #f7f8fa;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            transition: var(--transition);
         }
 
         /* ── Навбар ── */
         nav {
-            background: #fff;
-            border-bottom: 1px solid #e0e0e0;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--nav-border);
             padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             height: 52px;
+            transition: var(--transition);
         }
 
         .nav-brand {
             font-weight: 700;
             font-size: 16px;
-            color: #222;
+            color: var(--text);
             text-decoration: none;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .nav-monitoring {
@@ -36,23 +96,41 @@
             align-items: center;
             gap: 6px;
             padding: 7px 14px;
-            background: #f0f6ff;
-            color: #007BFF;
-            border: 1px solid #cce0ff;
+            background: var(--monitoring-bg);
+            color: var(--accent);
+            border: 1px solid var(--monitoring-border);
             border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
             text-decoration: none;
-            transition: background 0.15s, border-color 0.15s;
+            transition: var(--transition);
         }
 
         .nav-monitoring:hover {
-            background: #dceeff;
-            border-color: #007BFF;
+            background: var(--monitoring-border);
+            border-color: var(--accent);
+            text-decoration: none;
         }
 
-        .nav-monitoring svg {
+        /* ── Кнопка переключения темы ── */
+        #themeToggle {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            border: 1px solid var(--nav-border);
+            background: var(--toggle-bg);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
             flex-shrink: 0;
+            line-height: 1;
+        }
+
+        #themeToggle:hover {
+            background: var(--toggle-hover);
         }
 
         /* ── Основной контент ── */
@@ -66,7 +144,7 @@
         h2 {
             margin-bottom: 24px;
             font-size: 24px;
-            color: #222;
+            color: var(--text);
         }
 
         input[type="text"] {
@@ -74,21 +152,27 @@
             padding: 10px 14px;
             margin-bottom: 12px;
             font-size: 16px;
-            border: 1px solid #ccc;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
             border-radius: 6px;
             outline: none;
-            transition: border-color 0.15s;
+            transition: var(--transition);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
         }
 
         input[type="text"]:focus {
-            border-color: #007BFF;
+            border-color: var(--accent);
         }
 
         button[type="submit"] {
             padding: 10px 28px;
             font-size: 16px;
             cursor: pointer;
-            background: #007BFF;
+            background: var(--accent);
             color: white;
             border: none;
             border-radius: 6px;
@@ -96,7 +180,7 @@
         }
 
         button[type="submit"]:hover {
-            background: #0062cc;
+            background: var(--accent-hover);
         }
 
         #result {
@@ -104,9 +188,10 @@
             font-size: 18px;
             font-weight: bold;
             min-height: 28px;
+            color: var(--text);
         }
 
-        a { color: #007BFF; text-decoration: none; }
+        a { color: var(--accent); text-decoration: none; }
         a:hover { text-decoration: underline; }
     </style>
 </head>
@@ -114,13 +199,16 @@
 
     <nav>
         <a class="nav-brand" href="/">🔗 URL Shortener</a>
-        <a class="nav-monitoring" href="/monitoring" target="_blank">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Мониторинг
-        </a>
+        <div class="nav-right">
+            <a class="nav-monitoring" href="/monitoring" target="_blank">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Мониторинг
+            </a>
+            <button id="themeToggle" title="Переключить тему" aria-label="Переключить тему">🌙</button>
+        </div>
     </nav>
 
     <main>
@@ -134,9 +222,47 @@
     </main>
 
     <script>
+        /* ── Тема ── */
+        const html     = document.documentElement;
+        const btn      = document.getElementById('themeToggle');
+        const STORAGE_KEY = 'theme';
+
+        // Иконки: если тема тёмная — показываем солнце (перейти в светлую), и наоборот
+        function isDark() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved === 'dark') return true;
+            if (saved === 'light') return false;
+            // 'auto' или не задано → смотрим ОС
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        function applyTheme() {
+            btn.textContent = isDark() ? '☀️' : '🌙';
+        }
+
+        btn.addEventListener('click', () => {
+            const newTheme = isDark() ? 'light' : 'dark';
+            localStorage.setItem(STORAGE_KEY, newTheme);
+            html.setAttribute('data-theme', newTheme);
+            applyTheme();
+        });
+
+        // Применяем сохранённую тему сразу при загрузке (до рендера)
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'dark' || saved === 'light') {
+            html.setAttribute('data-theme', saved);
+        }
+        applyTheme();
+
+        // Следим за изменением темы ОС (если пользователь в режиме auto)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (!localStorage.getItem(STORAGE_KEY)) applyTheme();
+        });
+
+        /* ── Форма ── */
         document.getElementById('shortenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const longUrl = document.getElementById('longUrl').value;
+            const longUrl   = document.getElementById('longUrl').value;
             const resultDiv = document.getElementById('result');
             resultDiv.innerText = 'Генерируем...';
             try {
@@ -153,6 +279,5 @@
             }
         });
     </script>
-
 </body>
 </html>
