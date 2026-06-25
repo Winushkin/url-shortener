@@ -1,6 +1,7 @@
 .idea/
 .env
 deployments/data/
+deployments/docker-compose.override.yaml
 !deployments/data/kafka
 .DS_Store
 deployments/.DS_Store/
