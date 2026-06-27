@@ -46,15 +46,15 @@
         }]
     },
     {
-        "title": "Redis Uptime (min)",
-        "description": "Время непрерывной работы контейнера Redis в секундах.\nЕсли график резко падает в ноль — контейнер перезапускался (например, упал из-за нехватки памяти OOM).",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-        "targets": [{
-          "expr": "redis_uptime_in_seconds / 60",
-          "legendFormat": "minutes alive",
-          "refId": "A" }
-          ]
+      "title": "Redis Uptime (min)",
+      "description": "Время непрерывной работы контейнера Redis в секундах.\nЕсли график резко падает в ноль — контейнер перезапускался (например, упал из-за нехватки памяти OOM).",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [{
+        "expr": "redis_uptime_in_seconds / 60",
+        "legendFormat": "minutes alive",
+        "refId": "A" 
+      }]
     }
   ],
   "refresh": "5s",

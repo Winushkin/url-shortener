@@ -59,15 +59,17 @@ func generateRequestID() string {
 	return fmt.Sprintf("%016x", id)
 }
 
+func getURLPattern(r *http.Request) string {
+	if r.Pattern == "" {
+		return "Not Found"
+	}
+	return r.Pattern
+}
+
 func TelemetryMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		ctx := r.Context()
-
-		pathPattern := r.Pattern
-		if pathPattern == "" {
-			pathPattern = "Not Found"
-		}
 
 		log, ok := logger.GetLoggerFromCtx(ctx)
 		if !ok {
@@ -81,6 +83,7 @@ func TelemetryMiddleware(next http.Handler) http.Handler {
 				statusCode = http.StatusOK
 			}
 
+			pathPattern := getURLPattern(r)
 			httpRequestsTotal.WithLabelValues(pathPattern, r.Method, strconv.Itoa(statusCode)).Inc()
 			httpDuration.WithLabelValues(pathPattern, r.Method).Observe(duration)
 			return
@@ -102,7 +105,7 @@ func TelemetryMiddleware(next http.Handler) http.Handler {
 		}
 		statusCodeStr := strconv.Itoa(statusCode)
 
-
+		pathPattern := getURLPattern(r)
 		httpRequestsTotal.WithLabelValues(pathPattern, r.Method, statusCodeStr).Inc()
 		httpDuration.WithLabelValues(pathPattern, r.Method).Observe(duration.Seconds())
 

@@ -1,6 +1,21 @@
 services:
+
+  nginx:
+    image: nginx:alpine
+    container_name: url_nginx
+    ports:
+      - "127.0.0.1:8082:80" # Публикуем порт 8082 только локально для внешнего Nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - url_app
+    networks:
+      - app_net
+      - router
+
   redis:
     container_name: url_redis_cache
+    user: "0"
     image: redis:7-alpine
     env_file:
       - ../.env
@@ -51,6 +66,7 @@ services:
         condition: service_healthy
     networks:
       - app_net
+      - router
     restart: always
 
   kafka:
@@ -140,7 +156,6 @@ services:
     image: oliver006/redis_exporter:v1.55.0
     container_name: url_shortener_redis_exporter
     environment:
-      # Указываем адрес контейнера Redis внутри docker-сети
       - REDIS_ADDR=redis:6379
     ports:
       - "9121:9121"
@@ -169,19 +184,28 @@ services:
   grafana:
     image: grafana/grafana:10.0.0
     container_name: url_shortener_grafana
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     volumes:
       - ./data/grafana:/var/lib/grafana
 
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-         
+
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
+      - GF_SERVER_DOMAIN=${DOMAIN_NAME}
+      - GF_SERVER_ROOT_URL=${PROTOCOL_NAME}://${DOMAIN_NAME}/monitoring/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/main/main-dashboard.json
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ALLOW_EMBEDDING=true
     restart: unless-stopped
     networks:
       - monitoring
+      - router
 
 volumes:
   grafana:
@@ -195,4 +219,6 @@ networks:
   app_net:
     driver: bridge
   monitoring:
+    driver: bridge
+  router:
     driver: bridge

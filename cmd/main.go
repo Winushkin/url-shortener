@@ -27,8 +27,8 @@ import (
 	"shortener/internal/usecase"
 	"shortener/pkg/kafka"
 
-	_ "shortener/migrations"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	_ "shortener/migrations"
 )
 
 const (
@@ -79,11 +79,11 @@ func main() {
 	promPort := ":" + config.GetEnv("PROMETHEUS_PORT", "2112")
 	log.Debug(ctx, "prometheus", zap.String("port", promPort))
 	go func() {
-        http.Handle("/metrics", promhttp.Handler())
-        if err := http.ListenAndServe(promPort, nil); err != nil {
-            log.Error(ctx, err, "Failed to start Prometheus metrics server")
-        }
-    }()
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(promPort, nil); err != nil {
+			log.Error(ctx, err, "Failed to start Prometheus metrics server")
+		}
+	}()
 
 	// Cервер
 	server := registerServer(ctx, handler, cfg.Port)

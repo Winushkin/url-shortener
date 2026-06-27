@@ -1,12 +1,17 @@
 build:
 	docker build -t url_shortener_app .
 
-buildup:
+local:
+	docker compose -f deployments/docker-compose.yaml -f deployments/docker-compose.override.yaml --env-file .env up --build -d
+
+prod:
 	docker compose -f deployments/docker-compose.yaml --env-file .env up --build -d
+
+up:
+	docker compose -f deployments/docker-compose.yaml --env-file .env up -d
 
 down:
 	docker compose -f deployments/docker-compose.yaml --env-file .env down -v
-	rm -r deployments/data
 
 testUsecase:
 	docker compose -f deployments/docker-compose.test.yaml up --build -d
