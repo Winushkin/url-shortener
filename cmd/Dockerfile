@@ -10,13 +10,15 @@ COPY .. .
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -o server ./cmd/main.go
+    CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/main.go
 
 FROM alpine:latest
 
 COPY --from=builder /app/server ./
 COPY --from=builder /app/web/index.html ./
 
-EXPOSE 8000
+EXPOSE 8080
+
+USER nobody
 
 CMD ["./server"]
