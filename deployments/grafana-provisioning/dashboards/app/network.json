@@ -7,45 +7,65 @@
   "links": [],
   "liveNow": false,
   "panels": [
-        {
-            "title": "HTTP Request Rate (RPS)",
-            "description": "Количество входящих HTTP-запросов в секунду в разрезе методов и путей.\nПоказывает текущую нагрузку на сервис.",
-            "type": "timeseries",
-            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-            "targets": [{ 
-                "expr": "sum(rate(http_requests_total{method!~'CONNECT|TRACE', path!='GET /{$}'}[5m])) by (method, path)", 
-                "legendFormat": "{{method}} {{path}}",
-                "refId": "A" 
-            }]
-        },
-        {
-            "title": "HTTP Error Rate (5xx/4xx)",
-            "description": "Процент ошибочных ответов сервера от общего числа запросов.\nПомогает мгновенно увидеть деградацию сервиса после деплоя.",
-            "type": "timeseries",
-            "fieldConfig" : {
-                "defaults": {
-                    "max": 101,
-                    "min": 0
-                }
-            },
-            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-            "targets": [{ 
-                "expr": "(sum(rate(http_requests_total{code=~\"4..|5..\", job=\"go-app\"}[5m])) by (code) / ignoring(code) group_left sum(rate(http_requests_total{job=\"go-app\"}[5m]))) * 100 or on(code) vector(0)", 
-                "legendFormat": "Error Rate %",
-                "refId": "A" 
-            }]
-        },
-        {
-            "title": "HTTP Latency (p99/p95/p50)",
-            "description": "Время обработки запросов сервером (перцентили).\nПоказывает реальную скорость работы: например, p99 означает, что 99% пользователей получили ответ быстрее этого значения.",
-            "type": "timeseries",
-            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-            "targets": [
-                { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99 (99%)", "refId": "A" },
-                { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95 (95%)", "refId": "B" },
-                { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50 (Median)", "refId": "C" }
-            ]
+    {
+      "title": "HTTP Request Rate (RPS)",
+      "description": "Количество входящих HTTP-запросов в секунду в разрезе методов и путей.\nПоказывает текущую нагрузку на сервис.",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "targets": [{ 
+        "expr": "sum(rate(http_requests_total{method!~'CONNECT|TRACE', path!~'GET /{$}|Not Found'}[5m])) by (method, path)", 
+        "legendFormat": "{{path}}",
+        "refId": "A" 
+      }]
+    },
+    {
+      "title": "HTTP Error Rate (5xx/4xx)",
+      "description": "Процент ошибочных ответов сервера от общего числа запросов.\nПомогает мгновенно увидеть деградацию сервиса после деплоя.",
+      "type": "timeseries",
+      "fieldConfig" : {
+        "defaults": {
+          "max": 101,
+          "min": 0
         }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "targets": [{ 
+        "expr": "(sum(rate(http_requests_total{code=~\"4..|5..\", job=\"go-app\"}[5m])) by (code) / ignoring(code) group_left sum(rate(http_requests_total{job=\"go-app\"}[5m]))) * 100 or on(code) vector(0)", 
+        "legendFormat": "Error {{code}} %",
+        "refId": "A" 
+      }]
+    },
+    {
+      "title": "HTTP Latency (p99/p95/p50)",
+      "description": "Время обработки запросов сервером (перцентили).\nПоказывает реальную скорость работы: например, p99 означает, что 99% пользователей получили ответ быстрее этого значения.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+        "custom": {
+          "drawStyle": "line"
+        },
+        "unit": "s"
+        }
+      },
+      "targets": [
+        { 
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p99 (99%)", 
+          "refId": "A" 
+        },
+        { 
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p95 (95%)", 
+          "refId": "B" 
+        },
+        { 
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p50 (Median)", 
+          "refId": "C" 
+        }
+      ]
+    }
   ],
   "refresh": "5s",
   "schemaVersion": 38,

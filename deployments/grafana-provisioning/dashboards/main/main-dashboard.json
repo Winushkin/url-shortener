@@ -36,8 +36,8 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
       "targets": [{ 
-          "expr": "sum(rate(http_requests_total{method!~'CONNECT|TRACE', path!='GET /{$}'}[5m])) by (method, path)", 
-          "legendFormat": "{{method}} {{path}}",
+          "expr": "sum(rate(http_requests_total{method!~'CONNECT|TRACE', path!~'GET /{$}|Not Found'}[5m])) by (method, path)", 
+          "legendFormat": "{{path}}",
           "refId": "A" 
       }]
     },
@@ -47,15 +47,15 @@
       "description": "Процент ошибочных ответов сервера от общего числа запросов.\nПомогает мгновенно увидеть деградацию сервиса после деплоя.",
       "type": "timeseries",
       "fieldConfig" : {
-          "defaults": {
-              "max": 101,
-              "min": 0
-          }
+        "defaults": {
+          "max": 101,
+          "min": 0
+        }
       },
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
       "targets": [{ 
           "expr": "(sum(rate(http_requests_total{code=~\"4..|5..\", job=\"go-app\"}[5m])) by (code) / ignoring(code) group_left sum(rate(http_requests_total{job=\"go-app\"}[5m]))) * 100 or on(code) vector(0)", 
-          "legendFormat": "Error Rate %",
+          "legendFormat": "Error {{code}} %",
           "refId": "A" 
       }]
     },
@@ -65,10 +65,32 @@
       "description": "Время обработки запросов сервером (перцентили).\nПоказывает реальную скорость работы: например, p99 означает, что 99% пользователей получили ответ быстрее этого значения.",
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line"
+          },
+          "softMax": 0.5,
+          "min": 0,
+          "unit": "s"
+        }
+      },
       "targets": [
-        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99 (99%)", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95 (95%)", "refId": "B" },
-        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50 (Median)", "refId": "C" }
+        { 
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p99 (99%)", 
+          "refId": "A" 
+        },
+        { 
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p95 (95%)", 
+          "refId": "B" 
+        },
+        { 
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) and sum(increase(http_requests_total[5m])) > 0 or vector(0)", 
+          "legendFormat": "p50 (Median)", 
+          "refId": "C" 
+        }
       ]
     },
     {
