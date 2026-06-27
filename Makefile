@@ -2,7 +2,7 @@ build:
 	docker build -t url_shortener_app .
 
 local:
-	docker compose -f deployments/docker-compose.yaml -f deployments/docker-compose.override.yaml --env-file .env up --build -d
+	docker compose -f deployments/docker-compose.dev.yaml -f deployments/docker-compose.override.yaml --env-file .env up --build -d
 
 prod:
 	docker compose -f deployments/docker-compose.yaml --env-file .env up --build -d
