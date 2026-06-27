@@ -5,7 +5,7 @@ local:
 	docker compose -f deployments/docker-compose.dev.yaml -f deployments/docker-compose.override.yaml --env-file .env up --build -d
 
 prod:
-	docker compose -f deployments/docker-compose.yaml --env-file .env up --build -d
+	docker compose -f deployments/docker-compose.prod.yaml --env-file .env up --build -d
 
 up:
 	docker compose -f deployments/docker-compose.yaml --env-file .env up -d

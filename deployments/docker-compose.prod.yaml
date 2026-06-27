@@ -13,7 +13,7 @@ services:
       - router
   
   url_app:
-    image: ghcr.io/Winushkin/url-shortener:latest
+    image: ghcr.io/winushkin/url-shortener:latest
     container_name: url_app
     env_file:
       - ../.env

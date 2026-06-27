@@ -16,7 +16,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: Winushkin/url-shortener
+  IMAGE_NAME: winushkin/url-shortener
 
 jobs:
   build-and-push:
